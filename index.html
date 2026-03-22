@@ -16,7 +16,7 @@
   <title>Steady — alcohol-free streak</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -59,6 +59,8 @@
     </div>
     <nav class="site-nav" id="site-nav" aria-label="Main pages" hidden>
       <a href="#/home" class="site-nav-link" data-nav-link="home">Home</a>
+      <a href="#/insights" class="site-nav-link" data-nav-link="insights">Insights</a>
+      <a href="#/habits" class="site-nav-link" data-nav-link="habits">Habits</a>
       <a href="#/journal" class="site-nav-link" data-nav-link="journal">Journal</a>
       <a href="#/resources" class="site-nav-link" data-nav-link="resources">Resources</a>
     </nav>
@@ -134,19 +136,89 @@
     </section>
 
     <section class="panel dashboard app-view" id="dashboard" data-app-view="home" hidden>
-      <div class="streak-hero" id="dash-streak-block">
-        <p class="eyebrow">Alcohol-free for</p>
-        <div class="streak-numbers" aria-live="polite">
-          <span class="streak-unit">
-            <span class="streak-value" id="days">0</span>
-            <span class="streak-label">days</span>
-          </span>
-          <span class="streak-sep" aria-hidden="true">·</span>
-          <span class="streak-unit streak-sub">
-            <span class="streak-value-sm" id="hours-mins">0h 0m</span>
-          </span>
+      <div class="card streak-carousel-card" id="streak-carousel-wrap">
+        <div
+          class="streak-carousel"
+          id="streak-carousel"
+          aria-roledescription="carousel"
+          aria-label="Alcohol-free streak, two views"
+        >
+          <div class="streak-carousel-viewport">
+            <div class="streak-carousel-track" id="streak-carousel-track">
+              <div
+                class="streak-slide"
+                id="streak-slide-0"
+                role="group"
+                aria-roledescription="slide"
+                aria-label="Days and time of day"
+              >
+                <div class="streak-hero">
+                  <p class="eyebrow">Alcohol-free for</p>
+                  <div class="streak-numbers" aria-live="polite">
+                    <span class="streak-unit">
+                      <span class="streak-value" id="days">0</span>
+                      <span class="streak-label">days</span>
+                    </span>
+                    <span class="streak-sep" aria-hidden="true">·</span>
+                    <span class="streak-unit streak-sub">
+                      <span class="streak-value-sm" id="hours-mins">0h 0m</span>
+                    </span>
+                  </div>
+                  <p class="since-line">Since <strong id="since-display">—</strong></p>
+                </div>
+              </div>
+              <div
+                class="streak-slide streak-slide--alt"
+                id="streak-slide-1"
+                role="group"
+                aria-roledescription="slide"
+                aria-label="Total hours and week-style dots"
+                aria-hidden="true"
+              >
+                <div class="streak-alt-inner">
+                  <p class="eyebrow streak-alt-eyebrow">⏱ Total time</p>
+                  <p class="streak-alt-hours" id="streak-alt-hours">0</p>
+                  <p class="streak-alt-hours-label">hours alcohol-free</p>
+                  <p class="streak-alt-breakdown" id="streak-alt-breakdown">—</p>
+                  <div class="streak-day-dots" id="streak-day-dots" aria-hidden="true"></div>
+                  <p class="streak-dots-caption">Each dot is a day you’ve stacked (up to ten shown).</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="streak-carousel-nav" aria-label="Switch streak view">
+            <button type="button" class="streak-carousel-arrow" id="streak-carousel-prev" aria-label="Previous view">
+              ←
+            </button>
+            <div class="streak-carousel-tabs" role="tablist">
+              <button
+                type="button"
+                class="streak-carousel-tab is-active"
+                role="tab"
+                id="streak-tab-0"
+                aria-selected="true"
+                aria-controls="streak-slide-0"
+                data-streak-slide="0"
+              >
+                📅 Days
+              </button>
+              <button
+                type="button"
+                class="streak-carousel-tab"
+                role="tab"
+                id="streak-tab-1"
+                aria-selected="false"
+                aria-controls="streak-slide-1"
+                data-streak-slide="1"
+              >
+                ⏱ Hours
+              </button>
+            </div>
+            <button type="button" class="streak-carousel-arrow" id="streak-carousel-next" aria-label="Next view">
+              →
+            </button>
+          </div>
         </div>
-        <p class="since-line">Since <strong id="since-display">—</strong></p>
       </div>
 
       <div class="intent-hero" id="dash-intent-block" hidden>
@@ -164,44 +236,37 @@
         <p class="quote-attribution" id="quote-by"></p>
       </div>
 
-      <div class="card health-card" id="health-benefits-card">
-        <h2 class="card-title">Health spotlight</h2>
-        <p class="card-sub health-card-sub">Science-based reasons cutting back or quitting can support your body—everyone’s path and timeline differ.</p>
-        <p class="health-teaser" id="health-teaser"></p>
-        <button
-          type="button"
-          class="btn btn-ghost health-learn-btn"
-          id="health-learn-more"
-          aria-expanded="false"
-          aria-controls="health-expanded"
-        >
-          Learn more
-        </button>
-        <div class="health-expanded" id="health-expanded" hidden>
-          <p class="health-detail" id="health-detail"></p>
-          <div class="health-sources">
-            <h3 class="health-sources-title">Sources</h3>
-            <ul class="health-sources-list" id="health-sources-list"></ul>
+      <div class="card milestone-card" id="dash-milestone-card">
+        <div class="milestone-header">
+          <span class="milestone-icon" aria-hidden="true">🎯</span>
+          <div class="milestone-header-copy">
+            <h2 class="card-title milestone-card-title">Next milestone</h2>
+            <p class="milestone-target-chip">
+              <span class="milestone-target-num" id="milestone-target-num">—</span>
+              <span class="milestone-target-suffix">day goal</span>
+            </p>
           </div>
         </div>
-      </div>
-
-      <div class="card milestone-card" id="dash-milestone-card">
-        <h2 class="card-title">Next milestone</h2>
         <p class="milestone-text" id="milestone-text">—</p>
-        <div class="progress-wrap" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="milestone-bar-wrap" aria-label="Progress to next milestone">
-          <div class="progress-bar" id="milestone-bar"></div>
+        <div class="milestone-progress-block">
+          <div
+            class="progress-wrap milestone-progress-wrap"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+            id="milestone-bar-wrap"
+            aria-label="Progress to next milestone"
+          >
+            <div class="progress-bar milestone-progress-bar" id="milestone-bar"></div>
+          </div>
+          <p class="milestone-pct-note" id="milestone-pct-note" aria-live="polite">—</p>
         </div>
       </div>
 
       <div class="card checkin-card" id="dash-checkin-card">
         <h2 class="card-title">Daily check-in</h2>
-        <p class="card-sub">Log mood, energy, and feelings — over time you’ll see how they shift.</p>
-        <div class="trend-block" id="checkin-trend-block" hidden>
-          <p class="trend-label">Recent mood</p>
-          <div class="trend-strip" id="checkin-trend" role="img" aria-label="Mood over recent check-ins"></div>
-          <p class="trend-legend" id="checkin-trend-legend"></p>
-        </div>
+        <p class="card-sub">Log mood, energy, and feelings. Recent check-ins live on the Journal page.</p>
         <form id="checkin-form" class="stack tight checkin-form">
           <fieldset class="scale-fieldset">
             <legend class="field-label">Mood right now</legend>
@@ -295,24 +360,6 @@
           </label>
           <button type="submit" class="btn btn-secondary">Save check-in</button>
         </form>
-        <h3 class="history-heading">Recent check-ins</h3>
-        <ul class="checkin-list" id="checkin-list" aria-label="Recent check-ins"></ul>
-      </div>
-
-      <div class="card habits-card" id="dash-habits-card">
-        <h2 class="card-title">Habits to explore</h2>
-        <p class="card-sub">Try suggested ideas or add your own — small steady steps add up. Toggle suggestions on when you want to focus on them.</p>
-        <ul class="habits-suggested" id="habits-suggested-list" aria-label="Suggested habits"></ul>
-        <div class="habits-custom-block">
-          <label class="field">
-            <span class="field-label">Your own habit</span>
-            <div class="habits-custom-row">
-              <input type="text" id="habit-custom-input" maxlength="120" placeholder="e.g. Call a friend on hard days" autocomplete="off" />
-              <button type="button" class="btn btn-primary habits-add-btn" id="habit-custom-add">Add</button>
-            </div>
-          </label>
-          <ul class="habits-custom-list" id="habits-custom-list" aria-label="Your habits"></ul>
-        </div>
       </div>
 
       <div class="toolbar">
@@ -321,15 +368,128 @@
       </div>
     </section>
 
+    <section class="panel habits-panel app-view" id="view-habits" data-app-view="habits" hidden>
+      <h1 class="journal-page-title">Habits</h1>
+      <p class="card-sub habits-page-lede">
+        Build your habit list below, then log by day — each saved entry updates the Journal titled “Habits” for that date.
+      </p>
+      <div class="card habits-log-card">
+        <h2 class="card-title"><span class="habits-log-card-icon" aria-hidden="true">📋</span> Log by day</h2>
+        <p class="card-sub habits-log-card-sub">
+          Pick the date, tap <strong>＋ Add</strong> on a habit, then <strong>Save entry</strong>. Lines shrink to a short summary; use the trash control to remove one.
+        </p>
+        <div class="habits-log-date-toolbar">
+          <div class="habits-log-date-row">
+            <button type="button" class="btn btn-ghost habits-log-nav-btn" id="habits-log-prev-day" aria-label="Previous day">
+              ←
+            </button>
+            <label class="field habits-log-date-field">
+              <span class="field-label">Date</span>
+              <input type="date" id="habits-log-date" required />
+            </label>
+            <button type="button" class="btn btn-ghost habits-log-nav-btn" id="habits-log-next-day" aria-label="Next day">
+              →
+            </button>
+          </div>
+          <button type="button" class="btn btn-secondary habits-log-today-btn" id="habits-log-today">Today</button>
+        </div>
+        <fieldset class="habit-log-fieldset" id="habit-log-fieldset" hidden>
+          <legend class="field-label">Your habits</legend>
+          <p class="habit-log-hint">Fields stay hidden until you add an entry. <strong>Save entry</strong> stores it and updates your journal.</p>
+          <div id="habit-log-rows" class="habit-log-rows"></div>
+        </fieldset>
+      </div>
+      <div class="card habits-card">
+        <div class="habits-explore-head">
+          <h2 class="card-title">Habits to explore</h2>
+          <p class="habits-explore-teaser">Try suggested ideas or add your own — expand to see the full list.</p>
+          <button
+            type="button"
+            class="btn btn-ghost habits-explore-toggle"
+            id="habits-explore-toggle"
+            aria-expanded="false"
+            aria-controls="habits-explore-expanded"
+          >
+            Show suggestions
+          </button>
+        </div>
+        <div class="habits-explore-expanded" id="habits-explore-expanded" hidden>
+          <p class="card-sub habits-explore-sub">Small steady steps add up.</p>
+          <ul class="habits-suggested" id="habits-suggested-list" aria-label="Suggested habits"></ul>
+          <div class="habits-custom-block">
+            <label class="field">
+              <span class="field-label">Your own habit</span>
+              <div class="habits-custom-row">
+                <input type="text" id="habit-custom-input" maxlength="120" placeholder="e.g. Call a friend on hard days" autocomplete="off" />
+                <button type="button" class="btn btn-primary habits-add-btn" id="habit-custom-add">Add</button>
+              </div>
+            </label>
+            <ul class="habits-custom-list" id="habits-custom-list" aria-label="Your habits"></ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="panel journal-panel app-view" id="view-journal" data-app-view="journal" hidden>
       <div class="journal-screen" id="journal-screen-list">
         <h1 class="journal-page-title">Journal</h1>
-        <p class="card-sub journal-lede">Longer reflections live here. Link a check-in to see mood, energy, and feelings alongside your writing.</p>
-        <div class="journal-toolbar">
-          <a href="#/journal/new" class="btn btn-primary">New entry</a>
+        <p class="card-sub page-lede">
+          Your writing, mood check-ins from Home, and habit logs synced from the Habits page — each in its own section below. Jump with the links or scroll.
+        </p>
+        <div class="split-page-layout">
+          <nav class="journal-subnav" id="journal-subnav" aria-label="Journal sections">
+            <a class="journal-subnav-link" href="#/journal/writing">Your writing</a>
+            <a class="journal-subnav-link" href="#/journal/mood">Mood check-ins</a>
+            <a class="journal-subnav-link" href="#/journal/habits">Habit logs</a>
+          </nav>
+          <div class="split-page-main">
+        <section
+          id="journal-section-writing"
+          class="card journal-section-card journal-section-writing"
+          tabindex="-1"
+          aria-labelledby="journal-writing-heading"
+        >
+          <h2 class="card-title" id="journal-writing-heading">Your writing</h2>
+          <p class="card-sub journal-section-lede">
+            Longer reflections. Link a check-in when you save an entry to see mood, energy, and feelings alongside your text.
+          </p>
+          <div class="journal-toolbar journal-toolbar--section">
+            <a href="#/journal/new" class="btn btn-primary">New entry</a>
+          </div>
+          <ul class="journal-list" id="journal-entries-list" aria-label="Your journal entries"></ul>
+          <p class="journal-empty" id="journal-empty-hint" hidden>
+            No entries yet. When you’re ready, add one — it stays on this device.
+          </p>
+        </section>
+
+        <section
+          id="journal-section-mood"
+          class="card journal-section-card journal-section-mood"
+          tabindex="-1"
+          aria-labelledby="journal-mood-heading"
+        >
+          <h2 class="card-title" id="journal-mood-heading">Mood check-ins</h2>
+          <p class="card-sub journal-section-lede">Saved from Home — mood, energy, feelings, and optional note.</p>
+          <ul class="checkin-list" id="journal-checkins-list" aria-label="Recent check-ins"></ul>
+        </section>
+
+        <section
+          id="journal-section-habits"
+          class="card journal-section-card journal-section-habits"
+          tabindex="-1"
+          aria-labelledby="journal-habits-heading"
+        >
+          <h2 class="card-title" id="journal-habits-heading">Habit logs</h2>
+          <p class="card-sub journal-section-lede">
+            Auto-saved journal rows from the Habits page (one per day you log). Open one to read the full list for that day.
+          </p>
+          <ul class="journal-list journal-list--habit-logs" id="journal-habits-entries-list" aria-label="Habit log entries"></ul>
+          <p class="journal-empty journal-empty--inline" id="journal-habits-empty-hint" hidden>
+            No habit logs yet — save entries from <a href="#/habits">Habits</a> and they’ll show up here.
+          </p>
+        </section>
+          </div>
         </div>
-        <ul class="journal-list" id="journal-entries-list" aria-label="Journal entries"></ul>
-        <p class="journal-empty" id="journal-empty-hint" hidden>No entries yet. When you’re ready, add one — it stays on this device.</p>
       </div>
 
       <div class="journal-screen" id="journal-screen-compose" hidden>
@@ -370,42 +530,99 @@
       </div>
     </section>
 
+    <section class="panel insights-panel app-view" id="view-insights" data-app-view="insights" hidden>
+      <h1 class="journal-page-title">Your Insights</h1>
+      <p class="card-sub insights-page-lede">
+        A gentle read on what you’ve saved in Steady — your streak, moods, habits, and writing. It’s meant as encouragement from your own notes, not medical advice or a diagnosis.
+      </p>
+      <div class="card insights-copy-card">
+        <div
+          class="smart-insights-frame"
+          id="smart-insights-body"
+          role="region"
+          aria-live="polite"
+          aria-label="Your insights"
+        ></div>
+      </div>
+    </section>
+
     <section class="panel resources-panel app-view" id="view-resources" data-app-view="resources" hidden>
       <h1 class="journal-page-title">Resources</h1>
-      <p class="card-sub resources-lede">
+      <p class="card-sub page-lede">
         Browse ideas for books, podcasts, and meetings. Add your own to-dos, save favorites, and tune recommendations with thumbs up or down
         — everything stays on this device.
       </p>
-      <div id="resources-carousels-root" class="resources-carousels-root"></div>
-      <p class="resources-reset-wrap">
-        <button type="button" class="btn btn-text resources-reset-hidden" id="resources-reset-dismissed">
-          Show hidden recommendations again
-        </button>
-      </p>
 
-      <div class="card resources-list-card">
-        <h2 class="card-title">Your list</h2>
-        <p class="card-sub">Track things you want to try — check them off when you’re done.</p>
-        <form id="resources-add-form" class="resources-add-row">
-          <label class="field resources-add-field">
-            <span class="field-label">Add a resource</span>
-            <input type="text" id="resources-add-title" maxlength="200" placeholder="e.g. SMART meeting Tuesday" autocomplete="off" />
-          </label>
-          <label class="field resources-add-field resources-add-url-field">
-            <span class="field-label">Link <span class="optional">(optional)</span></span>
-            <input type="text" id="resources-add-url" maxlength="500" placeholder="https://…" inputmode="url" autocomplete="off" />
-          </label>
-          <button type="submit" class="btn btn-primary resources-add-submit">Add</button>
-        </form>
-        <ul class="resources-my-list" id="resources-my-list" aria-label="Your resource list"></ul>
-        <p class="resources-empty-hint" id="resources-my-empty" hidden>Nothing here yet — add your own or use 👍 on a recommendation.</p>
-      </div>
+      <div class="split-page-layout">
+        <nav class="journal-subnav" id="resources-side-nav" aria-label="On this page">
+          <a class="journal-subnav-link" href="#/resources" data-resources-jump="resources-section-health">Health spotlight</a>
+          <a class="journal-subnav-link" href="#/resources" data-resources-jump="resources-section-recommendations">
+            Recommendations
+          </a>
+          <a class="journal-subnav-link" href="#/resources" data-resources-jump="resources-section-list">Your list</a>
+          <a class="journal-subnav-link" href="#/resources" data-resources-jump="resources-section-favorites">Favorites</a>
+        </nav>
 
-      <div class="card resources-favorites-card">
-        <h2 class="card-title">Favorites</h2>
-        <p class="card-sub">Quick access to picks you’ve starred from recommendations or your list.</p>
-        <ul class="resources-fav-list" id="resources-favorites-list" aria-label="Favorite resources"></ul>
-        <p class="resources-empty-hint" id="resources-fav-empty" hidden>No favorites yet — tap the star on a card or list item.</p>
+        <div class="split-page-main">
+          <div id="resources-section-health" class="resources-jump-section card health-card" tabindex="-1">
+            <h2 class="card-title">Health spotlight</h2>
+            <p class="card-sub health-card-sub">
+              Science-based reasons cutting back or quitting can support your body — everyone’s path and timeline differ.
+            </p>
+            <p class="health-teaser" id="health-teaser"></p>
+            <button
+              type="button"
+              class="btn btn-ghost health-learn-btn"
+              id="health-learn-more"
+              aria-expanded="false"
+              aria-controls="health-expanded"
+            >
+              Learn more
+            </button>
+            <div class="health-expanded" id="health-expanded" hidden>
+              <p class="health-detail" id="health-detail"></p>
+              <div class="health-sources">
+                <h3 class="health-sources-title">Sources</h3>
+                <ul class="health-sources-list" id="health-sources-list"></ul>
+              </div>
+            </div>
+          </div>
+
+          <div id="resources-section-recommendations" class="resources-jump-section" tabindex="-1">
+            <h2 class="sr-only">Recommendations</h2>
+            <div id="resources-carousels-root" class="resources-carousels-root"></div>
+            <p class="resources-reset-wrap">
+              <button type="button" class="btn btn-text resources-reset-hidden" id="resources-reset-dismissed">
+                Show hidden recommendations again
+              </button>
+            </p>
+          </div>
+
+          <div id="resources-section-list" class="resources-jump-section card resources-list-card" tabindex="-1">
+            <h2 class="card-title">Your list</h2>
+            <p class="card-sub">Track things you want to try — check them off when you’re done.</p>
+            <form id="resources-add-form" class="resources-add-row">
+              <label class="field resources-add-field">
+                <span class="field-label">Add a resource</span>
+                <input type="text" id="resources-add-title" maxlength="200" placeholder="e.g. SMART meeting Tuesday" autocomplete="off" />
+              </label>
+              <label class="field resources-add-field resources-add-url-field">
+                <span class="field-label">Link <span class="optional">(optional)</span></span>
+                <input type="text" id="resources-add-url" maxlength="500" placeholder="https://…" inputmode="url" autocomplete="off" />
+              </label>
+              <button type="submit" class="btn btn-primary resources-add-submit">Add</button>
+            </form>
+            <ul class="resources-my-list" id="resources-my-list" aria-label="Your resource list"></ul>
+            <p class="resources-empty-hint" id="resources-my-empty" hidden>Nothing here yet — add your own or use 👍 on a recommendation.</p>
+          </div>
+
+          <div id="resources-section-favorites" class="resources-jump-section card resources-favorites-card" tabindex="-1">
+            <h2 class="card-title">Favorites</h2>
+            <p class="card-sub">Quick access to picks you’ve starred from recommendations or your list.</p>
+            <ul class="resources-fav-list" id="resources-favorites-list" aria-label="Favorite resources"></ul>
+            <p class="resources-empty-hint" id="resources-fav-empty" hidden>No favorites yet — tap the star on a card or list item.</p>
+          </div>
+        </div>
       </div>
     </section>
   </main>

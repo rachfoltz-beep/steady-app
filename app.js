@@ -5,6 +5,8 @@ const STORAGE_THEME = "steady_theme";
 const STORAGE_HABITS = "steady_habits";
 const STORAGE_JOURNAL = "steady_journal";
 const STORAGE_RESOURCES = "steady_resources";
+const STORAGE_HABIT_DAY_LOGS = "steady_habit_day_logs";
+const STORAGE_HABIT_ACTIVITY_HISTORY = "steady_habit_activity_history";
 
 const STEADY_EXPORT_KEYS = [
   STORAGE_START,
@@ -14,7 +16,19 @@ const STEADY_EXPORT_KEYS = [
   STORAGE_HABITS,
   STORAGE_JOURNAL,
   STORAGE_RESOURCES,
+  STORAGE_HABIT_DAY_LOGS,
+  STORAGE_HABIT_ACTIVITY_HISTORY,
 ];
+
+/** Journal entry title used when syncing habit logs from the Habits page. */
+const JOURNAL_TITLE_HABITS_SYNC = "Habits";
+
+/** `#/journal/<slug>` list anchors — must not collide with entry ids (use `section/` if needed). */
+const JOURNAL_LIST_SECTION_BY_SLUG = {
+  writing: "journal-section-writing",
+  mood: "journal-section-mood",
+  habits: "journal-section-habits",
+};
 
 const STEADY_EXPORT_VERSION = 1;
 
@@ -57,56 +71,56 @@ const CURATED_RESOURCES = [
     category: "books",
     title: "This Naked Mind",
     desc: "A science- and compassion-framed look at how alcohol hooks the brain — popular with people rethinking drinking.",
-    url: "https://thisnakedmind.com/",
+    url: "https://a.co/d/0ezgLyy5",
   },
   {
     id: "cb-alcohol-explained",
     category: "books",
     title: "Alcohol Explained",
     desc: "William Porter breaks down what alcohol does in the body and why cravings and habits form — clear and practical.",
-    url: "https://www.alcoholexplained.co.uk/",
+    url: "https://a.co/d/0d46hS50",
   },
   {
     id: "cb-quit-like-woman",
     category: "books",
     title: "Quit Like a Woman",
     desc: "Holly Whitaker’s memoir-meets-manifesto on culture, marketing, and choosing sobriety on your own terms.",
-    url: "https://www.hollywhitaker.com/",
+    url: "https://a.co/d/06CW224W",
   },
   {
     id: "cb-unexpected-joy",
     category: "books",
     title: "The Unexpected Joy of Being Sober",
     desc: "Catherine Gray’s warm, funny account of early sobriety and what changed when she stopped drinking.",
-    url: "https://www.catherinegray.co.uk/",
+    url: "https://a.co/d/08nh7yBy",
   },
   {
     id: "cp-recovery-elevator",
     category: "podcasts",
     title: "Recovery Elevator",
     desc: "Interviews and stories from people in recovery — community-focused, many episodes on alcohol specifically.",
-    url: "https://www.recoveryelevator.com/",
+    url: "https://open.spotify.com/show/51g2uQIwCFuJ2igFSWxn0P?si=397442a5708b4200",
   },
   {
     id: "cp-sober-awkward",
     category: "podcasts",
     title: "Sober Awkward",
     desc: "Two hosts talk social life, dating, and confidence without alcohol — light and relatable.",
-    url: "https://www.soberawkward.com/",
+    url: "https://open.spotify.com/show/4qXlSc9lDGStYLeYIjrWPH?si=297e560dc28a449c",
   },
   {
     id: "cp-bubble-hour",
     category: "podcasts",
     title: "The Bubble Hour",
     desc: "Conversations on sobriety, mental health, and recovery from Jean McCarthy and guests.",
-    url: "https://www.bubblehourpodcast.com/",
+    url: "https://open.spotify.com/show/4lfVy2RxM9oighai9YcebX?si=46b02e0bbcc24091",
   },
   {
     id: "cp-love-sobriety",
     category: "podcasts",
     title: "Love Sober",
     desc: "Kate Baily and Mandy Manners explore sober living, parenting, and midlife without the wine culture script.",
-    url: "https://lovesober.com/podcast/",
+    url: "https://open.spotify.com/show/2dtOPIAy9m0WKVJgiUhmRU?si=78879dac73844482",
   },
   {
     id: "cv-smart",
@@ -176,6 +190,160 @@ const SUGGESTED_HABITS = [
   { id: "connect", title: "Reach out to someone", desc: "Text, call, or meet — connection softens hard days." },
   { id: "urge-plan", title: "First 10 minutes plan", desc: "When a craving spikes: step outside, make tea, breathe, or text a friend." },
 ];
+
+const SUGGESTED_HABIT_BY_ID = Object.fromEntries(SUGGESTED_HABITS.map((h) => [h.id, h]));
+
+/** Compact habit tracker row (emoji only — keep light). */
+const HABIT_LOG_EMOJI = {
+  movement: "🚶",
+  "alt-drink": "🥤",
+  "self-reward": "✨",
+  sleep: "🌙",
+  connect: "💬",
+  "urge-plan": "⏱️",
+  custom: "✏️",
+};
+
+function habitLogEmojiForItem(item) {
+  if (item.kind === "custom") return HABIT_LOG_EMOJI.custom;
+  return HABIT_LOG_EMOJI[item.id] || "✓";
+}
+
+/** Quick-pick activities for datalist; users can always type something else. */
+const HABIT_ACTIVITY_PRESETS = {
+  movement: [
+    "Walk",
+    "Run or jog",
+    "Strength training",
+    "Stretch or yoga",
+    "Bike ride",
+    "Swim",
+    "Dance",
+    "Active chores",
+  ],
+  "alt-drink": ["Herbal tea", "Sparkling water", "Juice", "Coffee", "Soda", "Mocktail", "Iced drink"],
+  "self-reward": ["Named the win", "Journaled", "Small treat (non-alcohol)", "Extra rest", "Praised myself quietly"],
+  sleep: ["Earlier bedtime", "Dimmed screens", "Wind-down routine", "Cool dark room", "Consistent wake time"],
+  connect: ["Text", "Phone call", "Video chat", "In-person visit", "Support meeting", "Voice message"],
+  "urge-plan": ["Stepped outside", "Deep breathing", "Made a non-alcohol drink", "Messaged someone", "Moved my body", "Cold water on face"],
+};
+
+/** Second field for sleep / reward / connect / urge-plan rows, keyed by exact preset activity text. */
+const HABIT_SECONDARY_BY_ACTIVITY = {
+  sleep: {
+    "Earlier bedtime": { type: "minutes", label: "Minutes earlier than usual" },
+    "Dimmed screens": { type: "text", label: "What you changed", optional: true },
+    "Wind-down routine": { type: "text", label: "What you did", optional: false },
+    "Cool dark room": { type: "text", label: "Notes", optional: true },
+    "Consistent wake time": { type: "text", label: "Wake-time note", optional: true },
+    __default: { type: "minutes", label: "Minutes" },
+  },
+  "self-reward": {
+    "Named the win": { type: "text", label: "What you named", optional: true },
+    Journaled: { type: "minutes", label: "Minutes writing" },
+    "Small treat (non-alcohol)": { type: "text", label: "What treat", optional: true },
+    "Extra rest": { type: "minutes", label: "Extra rest (minutes)" },
+    "Praised myself quietly": { type: "text", label: "Note", optional: true },
+    __default: { type: "minutes", label: "Minutes" },
+  },
+  connect: {
+    Text: { type: "text", label: "Message notes", optional: true },
+    "Phone call": { type: "minutes", label: "Call length (minutes)" },
+    "Video chat": { type: "minutes", label: "Minutes" },
+    "In-person visit": { type: "minutes", label: "Time together (minutes)" },
+    "Support meeting": { type: "minutes", label: "Meeting length (minutes)" },
+    "Voice message": { type: "text", label: "Topic", optional: true },
+    __default: { type: "minutes", label: "Minutes" },
+  },
+  "urge-plan": {
+    "Stepped outside": { type: "minutes", label: "Minutes outside" },
+    "Deep breathing": { type: "minutes", label: "Minutes" },
+    "Made a non-alcohol drink": { type: "text", label: "What you made", optional: true },
+    "Messaged someone": { type: "text", label: "Who / what", optional: true },
+    "Moved my body": { type: "minutes", label: "Minutes" },
+    "Cold water on face": { type: "text", label: "Note", optional: true },
+    __default: { type: "minutes", label: "Minutes" },
+  },
+};
+
+const HABIT_DYNAMIC_IDS = ["sleep", "self-reward", "connect", "urge-plan"];
+
+const HABIT_HISTORY_CAP = 28;
+const HABIT_LOG_MAX_PER_DAY = 48;
+const HABIT_LOG_MAX_ENTRIES_PER_HABIT = 12;
+
+function getHabitSecondarySpec(habitId, activityTrimmed) {
+  const map = HABIT_SECONDARY_BY_ACTIVITY[habitId];
+  if (!map) return null;
+  const a = (activityTrimmed || "").trim();
+  if (a && map[a]) return map[a];
+  return map.__default;
+}
+
+function loadHabitActivityHistory() {
+  try {
+    const raw = localStorage.getItem(STORAGE_HABIT_ACTIVITY_HISTORY);
+    if (!raw) return {};
+    const o = JSON.parse(raw);
+    if (!o || typeof o !== "object" || Array.isArray(o)) return {};
+    const out = {};
+    Object.entries(o).forEach(([k, v]) => {
+      if (typeof k !== "string" || k.length > 120 || !Array.isArray(v)) return;
+      out[k] = v
+        .map((x) => String(x).trim())
+        .filter(Boolean)
+        .slice(0, HABIT_HISTORY_CAP);
+    });
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+function saveHabitActivityHistory(data) {
+  try {
+    localStorage.setItem(STORAGE_HABIT_ACTIVITY_HISTORY, JSON.stringify(data));
+  } catch (_) {}
+}
+
+function mergedActivityOptions(habitId) {
+  const presets = HABIT_ACTIVITY_PRESETS[habitId] || [];
+  const hist = loadHabitActivityHistory()[habitId] || [];
+  const seen = new Set();
+  const out = [];
+  hist.forEach((h) => {
+    if (h && !seen.has(h)) {
+      seen.add(h);
+      out.push(h);
+    }
+  });
+  presets.forEach((p) => {
+    if (!seen.has(p)) {
+      seen.add(p);
+      out.push(p);
+    }
+  });
+  return out;
+}
+
+function rememberHabitActivitiesFromLogs(logs) {
+  if (!logs || !logs.length) return;
+  const all = loadHabitActivityHistory();
+  let changed = false;
+  logs.forEach((log) => {
+    if (log.habitKind !== "suggested" || !log.activity) return;
+    const hid = log.habitId;
+    if (!HABIT_ACTIVITY_PRESETS[hid]) return;
+    const list = Array.isArray(all[hid]) ? [...all[hid]] : [];
+    const a = log.activity.trim();
+    const next = [a, ...list.filter((x) => x !== a)].slice(0, HABIT_HISTORY_CAP);
+    if (JSON.stringify(next) !== JSON.stringify(list)) {
+      all[hid] = next;
+      changed = true;
+    }
+  });
+  if (changed) saveHabitActivityHistory(all);
+}
 
 const MILESTONES = [1, 3, 7, 14, 30, 60, 90, 180, 365];
 
@@ -321,7 +489,15 @@ const els = {
   daysSinceInput: document.getElementById("days-since-input"),
   setupFinishNotYet: document.getElementById("setup-finish-not-yet"),
   dashboard: document.getElementById("dashboard"),
-  dashStreakBlock: document.getElementById("dash-streak-block"),
+  streakCarouselWrap: document.getElementById("streak-carousel-wrap"),
+  streakCarouselTrack: document.getElementById("streak-carousel-track"),
+  streakCarouselPrev: document.getElementById("streak-carousel-prev"),
+  streakCarouselNext: document.getElementById("streak-carousel-next"),
+  streakSlide0: document.getElementById("streak-slide-0"),
+  streakSlide1: document.getElementById("streak-slide-1"),
+  streakAltHours: document.getElementById("streak-alt-hours"),
+  streakAltBreakdown: document.getElementById("streak-alt-breakdown"),
+  streakDayDots: document.getElementById("streak-day-dots"),
   dashIntentBlock: document.getElementById("dash-intent-block"),
   dashMilestoneCard: document.getElementById("dash-milestone-card"),
   days: document.getElementById("days"),
@@ -332,19 +508,26 @@ const els = {
   milestoneText: document.getElementById("milestone-text"),
   milestoneBar: document.getElementById("milestone-bar"),
   milestoneBarWrap: document.getElementById("milestone-bar-wrap"),
+  milestoneTargetNum: document.getElementById("milestone-target-num"),
+  milestonePctNote: document.getElementById("milestone-pct-note"),
+  smartInsightsBody: document.getElementById("smart-insights-body"),
   checkinForm: document.getElementById("checkin-form"),
   checkinNote: document.getElementById("checkin-note"),
-  checkinList: document.getElementById("checkin-list"),
-  checkinTrendBlock: document.getElementById("checkin-trend-block"),
-  checkinTrend: document.getElementById("checkin-trend"),
-  checkinTrendLegend: document.getElementById("checkin-trend-legend"),
   moodCaption: document.getElementById("mood-caption"),
   energyCaption: document.getElementById("energy-caption"),
   emotionChips: document.getElementById("emotion-chips"),
+  habitLogFieldset: document.getElementById("habit-log-fieldset"),
+  habitLogRows: document.getElementById("habit-log-rows"),
+  habitsLogDate: document.getElementById("habits-log-date"),
+  habitsLogPrevDay: document.getElementById("habits-log-prev-day"),
+  habitsLogNextDay: document.getElementById("habits-log-next-day"),
+  habitsLogToday: document.getElementById("habits-log-today"),
   habitsSuggestedList: document.getElementById("habits-suggested-list"),
   habitCustomInput: document.getElementById("habit-custom-input"),
   habitCustomAdd: document.getElementById("habit-custom-add"),
   habitsCustomList: document.getElementById("habits-custom-list"),
+  habitsExploreToggle: document.getElementById("habits-explore-toggle"),
+  habitsExploreExpanded: document.getElementById("habits-explore-expanded"),
   btnSettings: document.getElementById("btn-settings"),
   btnSlip: document.getElementById("btn-slip"),
   btnStartClockNow: document.getElementById("btn-start-clock-now"),
@@ -364,12 +547,17 @@ const els = {
   slipCancel: document.getElementById("slip-cancel"),
   btnHeaderSettings: document.getElementById("btn-header-settings"),
   siteNav: document.getElementById("site-nav"),
+  viewHabits: document.getElementById("view-habits"),
+  viewInsights: document.getElementById("view-insights"),
   viewJournal: document.getElementById("view-journal"),
   journalScreenList: document.getElementById("journal-screen-list"),
   journalScreenCompose: document.getElementById("journal-screen-compose"),
   journalScreenRead: document.getElementById("journal-screen-read"),
   journalEntriesList: document.getElementById("journal-entries-list"),
+  journalCheckinsList: document.getElementById("journal-checkins-list"),
+  journalHabitsEntriesList: document.getElementById("journal-habits-entries-list"),
   journalEmptyHint: document.getElementById("journal-empty-hint"),
+  journalHabitsEmptyHint: document.getElementById("journal-habits-empty-hint"),
   journalBackCompose: document.getElementById("journal-back-compose"),
   journalForm: document.getElementById("journal-form"),
   journalTitle: document.getElementById("journal-title"),
@@ -390,6 +578,7 @@ const els = {
   resourcesMyEmpty: document.getElementById("resources-my-empty"),
   resourcesFavoritesList: document.getElementById("resources-favorites-list"),
   resourcesFavEmpty: document.getElementById("resources-fav-empty"),
+  resourcesSideNav: document.getElementById("resources-side-nav"),
   healthTeaser: document.getElementById("health-teaser"),
   healthDetail: document.getElementById("health-detail"),
   healthSourcesList: document.getElementById("health-sources-list"),
@@ -488,6 +677,195 @@ function saveStart(date) {
 
 function clearTrackedStart() {
   localStorage.removeItem(STORAGE_START);
+}
+
+function normalizeHabitLogEntry(x) {
+  if (!x || typeof x !== "object") return null;
+  const kind = x.habitKind === "custom" ? "custom" : "suggested";
+  const habitId = typeof x.habitId === "string" ? x.habitId.trim().slice(0, 120) : "";
+  if (!habitId) return null;
+  const habitLabel = typeof x.habitLabel === "string" ? x.habitLabel.trim().slice(0, 120) : "";
+  const activity = typeof x.activity === "string" ? x.activity.trim().slice(0, 120) : "";
+  if (!activity) return null;
+
+  const details = typeof x.details === "string" ? x.details.trim().slice(0, 200) : "";
+
+  let minutes = null;
+  if (x.minutes !== undefined && x.minutes !== null && x.minutes !== "") {
+    const n = Number(x.minutes);
+    if (Number.isFinite(n)) minutes = Math.min(999, Math.max(1, Math.floor(n)));
+  }
+
+  if (kind === "custom") {
+    if (minutes === null) return null;
+    const out = { habitKind: "custom", habitId, habitLabel, activity, minutes };
+    if (details) out.details = details;
+    return out;
+  }
+
+  if (habitId === "alt-drink") {
+    const out = {
+      habitKind: "suggested",
+      habitId,
+      habitLabel,
+      activity,
+      minutes: null,
+    };
+    if (details) out.details = details;
+    return out;
+  }
+
+  if (habitId === "movement") {
+    if (minutes === null) return null;
+    const out = { habitKind: "suggested", habitId, habitLabel, activity, minutes };
+    if (details) out.details = details;
+    return out;
+  }
+
+  if (HABIT_DYNAMIC_IDS.includes(habitId)) {
+    const spec = getHabitSecondarySpec(habitId, activity);
+    if (!spec) return null;
+    if (spec.type === "minutes") {
+      if (minutes === null) return null;
+      return { habitKind: "suggested", habitId, habitLabel, activity, minutes };
+    }
+    if (details) {
+      return {
+        habitKind: "suggested",
+        habitId,
+        habitLabel,
+        activity,
+        minutes: null,
+        details,
+      };
+    }
+    if (minutes !== null) {
+      return {
+        habitKind: "suggested",
+        habitId,
+        habitLabel,
+        activity,
+        minutes: null,
+        details: `${minutes} min`,
+      };
+    }
+    if (!spec.optional) return null;
+    return { habitKind: "suggested", habitId, habitLabel, activity, minutes: null };
+  }
+
+  return null;
+}
+
+function normalizeHabitLogs(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw.map(normalizeHabitLogEntry).filter(Boolean).slice(0, HABIT_LOG_MAX_PER_DAY);
+}
+
+function habitTitleForLog(log) {
+  if (!log) return "";
+  if (log.habitKind === "custom") return log.habitLabel || log.habitId;
+  return SUGGESTED_HABIT_BY_ID[log.habitId]?.title || log.habitLabel || log.habitId;
+}
+
+function formatHabitLogLine(l) {
+  const parts = [l.activity];
+  if (l.minutes != null && Number.isFinite(l.minutes)) parts.push(`${l.minutes} min`);
+  const d = l.details != null ? String(l.details).trim() : "";
+  if (d) parts.push(d);
+  return `${habitTitleForLog(l)}: ${parts.join(" · ")}`;
+}
+
+/** One-line summary without habit title (shown under habit heading). */
+function formatHabitLogSummaryLine(l) {
+  const parts = [l.activity];
+  if (l.minutes != null && Number.isFinite(l.minutes)) parts.push(`${l.minutes} min`);
+  const d = l.details != null ? String(l.details).trim() : "";
+  if (d) parts.push(d);
+  return parts.join(" · ");
+}
+
+function localDateKeyFromMs(ms) {
+  const d = new Date(ms);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function localDateKeyFromIso(iso) {
+  return localDateKeyFromMs(new Date(iso).getTime());
+}
+
+function dateKeyAddDays(dateKey, deltaDays) {
+  const [y, mo, d] = dateKey.split("-").map(Number);
+  if (!y || !mo || !d) return localDateKeyFromMs(Date.now());
+  const dt = new Date(y, mo - 1, d + deltaDays);
+  return localDateKeyFromMs(dt.getTime());
+}
+
+function localNoonIsoFromDateKey(dateKey) {
+  const [y, mo, d] = dateKey.split("-").map(Number);
+  if (!y || !mo || !d) return new Date().toISOString();
+  return new Date(y, mo - 1, d, 12, 0, 0, 0).toISOString();
+}
+
+function loadHabitDayLogs() {
+  try {
+    const raw = localStorage.getItem(STORAGE_HABIT_DAY_LOGS);
+    if (!raw) return {};
+    const o = JSON.parse(raw);
+    if (!o || typeof o !== "object" || Array.isArray(o)) return {};
+    const out = {};
+    Object.entries(o).forEach(([k, v]) => {
+      if (typeof k !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(k)) return;
+      const logs = normalizeHabitLogs(v);
+      if (logs.length) out[k] = logs;
+    });
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+function saveHabitDayLogsAll(data) {
+  try {
+    const keys = Object.keys(data).sort();
+    const trimmed = {};
+    keys.slice(-400).forEach((k) => {
+      trimmed[k] = data[k];
+    });
+    localStorage.setItem(STORAGE_HABIT_DAY_LOGS, JSON.stringify(trimmed));
+  } catch (_) {}
+}
+
+function formatHabitsJournalBody(logs) {
+  if (!logs || !logs.length) return "";
+  return logs.map(formatHabitLogLine).join("\n");
+}
+
+function syncHabitsToJournalForDay(dateKey, logs) {
+  const title = JOURNAL_TITLE_HABITS_SYNC;
+  const entries = loadJournal();
+  const idx = entries.findIndex(
+    (e) => localDateKeyFromIso(e.at) === dateKey && e.title.trim() === title,
+  );
+  if (logs.length === 0) {
+    if (idx >= 0) entries.splice(idx, 1);
+  } else {
+    const body = formatHabitsJournalBody(logs);
+    if (idx >= 0) {
+      entries[idx] = { ...entries[idx], body };
+    } else {
+      entries.unshift({
+        id: newJournalId(),
+        at: localNoonIsoFromDateKey(dateKey),
+        title,
+        body,
+        checkinAt: null,
+      });
+    }
+  }
+  saveJournal(entries);
 }
 
 function normalizeCheckin(entry) {
@@ -771,7 +1149,7 @@ function renderResourcesCarousels(state) {
     favBtn.className = "btn btn-ghost res-fav-toggle";
     favBtn.setAttribute("aria-pressed", isFav ? "true" : "false");
     favBtn.setAttribute("aria-label", isFav ? "Remove from favorites" : "Save to favorites");
-    favBtn.textContent = isFav ? "★ Favorited" : "☆ Favorite";
+    favBtn.textContent = isFav ? "★" : "☆";
     favBtn.addEventListener("click", () => {
       const s = loadResourcesState();
       if (s.favoritedCurated.includes(item.id)) {
@@ -965,13 +1343,90 @@ function renderResourcesFavorites(state) {
   });
 }
 
+let resourcesSubnavScrollBound = false;
+
+function steadyPrefersReducedMotion() {
+  try {
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  } catch {
+    return false;
+  }
+}
+
+function bindResourcesSubnavScrollListener() {
+  if (resourcesSubnavScrollBound) return;
+  resourcesSubnavScrollBound = true;
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (els.viewResources.hidden) return;
+      updateResourcesNavActive();
+    },
+    { passive: true },
+  );
+}
+
+function scrollToResourcesSection(id) {
+  const target = document.getElementById(id);
+  if (!target) return;
+  const behavior = steadyPrefersReducedMotion() ? "auto" : "smooth";
+  target.scrollIntoView({ behavior, block: "start" });
+  target.focus({ preventScroll: true });
+}
+
+function updateResourcesNavActive() {
+  if (!els.resourcesSideNav || els.viewResources.hidden) return;
+  const ids = [
+    "resources-section-health",
+    "resources-section-recommendations",
+    "resources-section-list",
+    "resources-section-favorites",
+  ];
+  const threshold = 100;
+  const vh = window.innerHeight;
+  let activeId = ids[0];
+  for (const sid of ids) {
+    const el = document.getElementById(sid);
+    if (!el) continue;
+    if (el.getBoundingClientRect().top <= threshold) activeId = sid;
+  }
+  const lastId = ids[ids.length - 1];
+  const lastEl = document.getElementById(lastId);
+  if (lastEl) {
+    const r = lastEl.getBoundingClientRect();
+    if (r.top > threshold && r.top < vh * 0.88 && r.bottom > threshold) {
+      activeId = lastId;
+    }
+  }
+  els.resourcesSideNav.querySelectorAll("[data-resources-jump]").forEach((el) => {
+    const on = el.getAttribute("data-resources-jump") === activeId;
+    el.classList.toggle("is-active", on);
+    if (on) el.setAttribute("aria-current", "location");
+    else el.removeAttribute("aria-current");
+  });
+}
+
+function bindResourcesPageNav() {
+  if (!els.resourcesSideNav || els.resourcesSideNav.dataset.bound) return;
+  els.resourcesSideNav.dataset.bound = "1";
+  els.resourcesSideNav.addEventListener("click", (e) => {
+    const jump = e.target.closest("[data-resources-jump]");
+    if (!jump || !els.resourcesSideNav.contains(jump)) return;
+    e.preventDefault();
+    scrollToResourcesSection(jump.getAttribute("data-resources-jump"));
+  });
+  bindResourcesSubnavScrollListener();
+}
+
 function renderResourcesPage() {
   if (!els.viewResources || els.viewResources.hidden) return;
+  renderHealthFact();
   const state = loadResourcesState();
   renderResourcesCarousels(state);
   renderResourcesMyList(state);
   renderResourcesFavorites(state);
   els.resourcesResetDismissed.hidden = state.dismissed.length === 0;
+  requestAnimationFrame(() => updateResourcesNavActive());
 }
 
 function collectSteadyDataForExport() {
@@ -1060,7 +1515,7 @@ async function handleImportFile(file) {
   const msgEmpty =
     "This backup has no Steady data fields. Restore anyway? All current Steady data in this browser will be cleared.";
   const msgFull =
-    "Restore this backup? This replaces all Steady data in this browser (streak, check-ins, journal, habits, resources, theme). The page will reload.";
+    "Restore this backup? This replaces all Steady data in this browser (streak, check-ins, journal, habits, habit-by-day logs, resources, theme). The page will reload.";
   if (keyCount === 0) {
     if (!confirm(msgEmpty)) return;
   } else if (!confirm(msgFull)) {
@@ -1142,9 +1597,14 @@ function parseHash(hash) {
   const parts = raw.split("/").filter(Boolean);
   if (parts.length === 0) return { view: "home" };
   if (parts[0] === "home") return { view: "home" };
+  if (parts[0] === "insights") return { view: "insights" };
   if (parts[0] === "resources") return { view: "resources" };
+  if (parts[0] === "habits") return { view: "habits" };
   if (parts[0] === "journal") {
     if (parts[1] === "new") return { view: "journal", sub: "new" };
+    if (parts[1] && JOURNAL_LIST_SECTION_BY_SLUG[parts[1]]) {
+      return { view: "journal", sub: "list", scrollToId: JOURNAL_LIST_SECTION_BY_SLUG[parts[1]] };
+    }
     if (parts[1]) return { view: "journal", sub: "read", id: parts[1] };
     return { view: "journal", sub: "list" };
   }
@@ -1182,6 +1642,135 @@ function renderHealthFact() {
   els.healthLearnMore.textContent = "Learn more";
 }
 
+function habitStatsLastNDays(n) {
+  const all = loadHabitDayLogs();
+  let daysWithAny = 0;
+  let totalLines = 0;
+  for (let i = 0; i < n; i += 1) {
+    const d = new Date();
+    d.setHours(12, 0, 0, 0);
+    d.setDate(d.getDate() - i);
+    const key = localDateKeyFromMs(d.getTime());
+    const logs = all[key];
+    if (logs && logs.length) {
+      daysWithAny += 1;
+      totalLines += logs.length;
+    }
+  }
+  return { daysWithAny, totalLines };
+}
+
+function moodInsightStats() {
+  const notes = loadNotes().filter((n) => !n.legacy && typeof n.mood === "number");
+  if (!notes.length) return { hasData: false, total: 0 };
+  const recent = notes.slice(0, 7);
+  const avg = recent.reduce((s, x) => s + x.mood, 0) / recent.length;
+  let trend = "steady";
+  if (recent.length >= 4) {
+    const mid = Math.max(1, Math.floor(recent.length / 2));
+    const newerAvg = recent.slice(0, mid).reduce((s, x) => s + x.mood, 0) / mid;
+    const olderAvg = recent.slice(mid).reduce((s, x) => s + x.mood, 0) / (recent.length - mid);
+    if (newerAvg > olderAvg + 0.35) trend = "up";
+    else if (newerAvg < olderAvg - 0.35) trend = "down";
+  }
+  return { hasData: true, total: notes.length, recentCount: recent.length, avg, trend };
+}
+
+function journalWritingCountExcludingHabits() {
+  const t = JOURNAL_TITLE_HABITS_SYNC;
+  return loadJournal().filter((e) => e.title.trim() !== t).length;
+}
+
+/** Supportive overview from on-device data only — not medical advice. */
+function buildSmartInsightParagraphs() {
+  const start = loadStart();
+  const preparing = isIntentOnly() || !start;
+  const mood = moodInsightStats();
+  const habitWindow = 7;
+  const h = habitStatsLastNDays(habitWindow);
+  const jCount = journalWritingCountExcludingHabits();
+
+  const paras = [];
+
+  if (start) {
+    const days = Math.floor(msSinceStart(start) / 86400000);
+    paras.push(
+      `You’re sitting at about ${days} alcohol-free day${days === 1 ? "" : "s"} — not a grade, just time you’ve given yourself. Whether today felt huge or barely survivable, it still counts as part of that story.`,
+    );
+  } else if (preparing) {
+    paras.push(
+      `You’re here without a start date on the clock, and that’s a fine place to be. There’s no quiz to pass first; when you want to pin a beginning, this app will still be here.`,
+    );
+  }
+
+  const bits = [];
+
+  if (mood.hasData) {
+    if (mood.avg >= 4) {
+      bits.push(
+        `If I look at your latest check-ins, mood has been leaning toward the lighter side — worth a quiet nod to yourself if that lands at all.`,
+      );
+    } else if (mood.avg <= 2.5) {
+      bits.push(
+        `Your recent moods have been pretty low on the check-ins. That’s a lot to hold; you don’t owe anyone a brave face, and leaning on someone you trust is still a move forward.`,
+      );
+    } else {
+      bits.push(
+        `Mood-wise you’ve mostly been in that middle band lately — not flashy, but honest, and that still paints a picture over time.`,
+      );
+    }
+    if (mood.trend === "up" && mood.recentCount >= 4) {
+      bits.push(`Stacked next to the stretch just before, the newest few feel a touch brighter — small shifts are still shifts.`);
+    } else if (mood.trend === "down" && mood.recentCount >= 4) {
+      bits.push(`The freshest check-ins read heavier than the batch before them — that can be a wave, not a verdict on who you are.`);
+    }
+  } else {
+    bits.push(
+      `Whenever a mood check-in feels doable — even just sometimes — those little snapshots stack into something kinder to look back on.`,
+    );
+  }
+
+  if (h.daysWithAny > 0) {
+    const dayWord = h.daysWithAny === 1 ? "day" : "days";
+    bits.push(
+      `Over the past week you’ve opened the habit side of things on ${h.daysWithAny} ${dayWord} — nothing heroic required; showing up in small ways still counts.`,
+    );
+  } else {
+    bits.push(
+      `The habit log’s been quiet, and that’s allowed — it’s a notebook, not a report you have to file.`,
+    );
+  }
+
+  if (jCount > 0) {
+    bits.push(
+      `You’ve also tucked away ${jCount} journal entr${jCount === 1 ? "y" : "ies"} that aren’t just habit lines — that’s you leaving room for thoughts that need more than a checkbox.`,
+    );
+  } else {
+    bits.push(
+      `If you ever want more than quick logs, the journal doesn’t care how polished it is — a short paragraph can mean a lot to future-you.`,
+    );
+  }
+
+  paras.push(bits.join(" "));
+
+  paras.push(
+    `Almost nobody’s path runs straight. Whatever today looked like, you’re allowed to try again tomorrow — no permission slip, no perfect streak required.`,
+  );
+
+  return paras;
+}
+
+function renderSmartInsights() {
+  if (!els.smartInsightsBody) return;
+  els.smartInsightsBody.innerHTML = "";
+  buildSmartInsightParagraphs().forEach((text) => {
+    const p = document.createElement("p");
+    p.className = "smart-insights-line";
+    p.textContent = text;
+    els.smartInsightsBody.appendChild(p);
+  });
+}
+
 function refreshDashboardData() {
   renderQuote();
   renderHealthFact();
@@ -1192,33 +1781,76 @@ function refreshDashboardData() {
 function applyRoute() {
   if (!isAppReady()) return;
   const r = parseHash(location.hash);
-  const navKey = r.view === "journal" ? "journal" : r.view === "resources" ? "resources" : "home";
+  let navKey = "home";
+  if (r.view === "journal") navKey = "journal";
+  else if (r.view === "resources") navKey = "resources";
+  else if (r.view === "habits") navKey = "habits";
+  else if (r.view === "insights") navKey = "insights";
   updateNavActive(navKey);
 
   if (r.view === "journal") {
     els.dashboard.hidden = true;
     els.viewResources.hidden = true;
+    if (els.viewInsights) els.viewInsights.hidden = true;
+    if (els.viewHabits) els.viewHabits.hidden = true;
     els.viewJournal.hidden = false;
-    window.scrollTo(0, 0);
     if (r.sub === "new") {
+      window.scrollTo(0, 0);
       showJournalCompose();
     } else if (r.sub === "read" && r.id) {
+      window.scrollTo(0, 0);
       showJournalRead(r.id);
     } else {
       showJournalList();
+      if (r.scrollToId) {
+        queueMicrotask(() => {
+          const el = document.getElementById(r.scrollToId);
+          if (!el) return;
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+          el.focus({ preventScroll: true });
+        });
+      } else {
+        window.scrollTo(0, 0);
+      }
     }
   } else if (r.view === "resources") {
     els.dashboard.hidden = true;
     els.viewJournal.hidden = true;
+    if (els.viewInsights) els.viewInsights.hidden = true;
+    if (els.viewHabits) els.viewHabits.hidden = true;
     els.viewResources.hidden = false;
     els.journalScreenList.hidden = false;
     els.journalScreenCompose.hidden = true;
     els.journalScreenRead.hidden = true;
     window.scrollTo(0, 0);
     renderResourcesPage();
+  } else if (r.view === "habits") {
+    els.dashboard.hidden = true;
+    els.viewJournal.hidden = true;
+    els.viewResources.hidden = true;
+    if (els.viewInsights) els.viewInsights.hidden = true;
+    if (els.viewHabits) els.viewHabits.hidden = false;
+    els.journalScreenList.hidden = false;
+    els.journalScreenCompose.hidden = true;
+    els.journalScreenRead.hidden = true;
+    window.scrollTo(0, 0);
+    renderHabits();
+  } else if (r.view === "insights") {
+    els.dashboard.hidden = true;
+    els.viewJournal.hidden = true;
+    els.viewResources.hidden = true;
+    if (els.viewHabits) els.viewHabits.hidden = true;
+    if (els.viewInsights) els.viewInsights.hidden = false;
+    els.journalScreenList.hidden = false;
+    els.journalScreenCompose.hidden = true;
+    els.journalScreenRead.hidden = true;
+    window.scrollTo(0, 0);
+    renderSmartInsights();
   } else {
     els.viewJournal.hidden = true;
     els.viewResources.hidden = true;
+    if (els.viewInsights) els.viewInsights.hidden = true;
+    if (els.viewHabits) els.viewHabits.hidden = true;
     els.dashboard.hidden = false;
     els.journalScreenList.hidden = false;
     els.journalScreenCompose.hidden = true;
@@ -1268,38 +1900,60 @@ function syncJournalLinkUI() {
   els.journalCheckinField.hidden = !els.journalLinkCheckin.checked;
 }
 
-function renderJournalList() {
-  const entries = [...loadJournal()].sort((a, b) => new Date(b.at) - new Date(a.at));
-  els.journalEntriesList.innerHTML = "";
-  els.journalEmptyHint.hidden = entries.length > 0;
-  entries.forEach((entry) => {
-    const li = document.createElement("li");
-    const a = document.createElement("a");
-    a.className = "journal-list-link";
-    a.href = `#/journal/${entry.id}`;
-    const title = document.createElement("p");
-    title.className = "journal-list-title";
+function appendJournalListItem(ul, entry, mode) {
+  const li = document.createElement("li");
+  const a = document.createElement("a");
+  a.className = "journal-list-link" + (mode === "habit" ? " journal-list-link--habit-log" : "");
+  a.href = `#/journal/${entry.id}`;
+  const title = document.createElement("p");
+  title.className = "journal-list-title";
+  const meta = document.createElement("p");
+  meta.className = "journal-list-meta";
+  const dateStr = new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(entry.at));
+
+  if (mode === "habit") {
+    title.textContent = "Habit log";
+    meta.append(document.createTextNode(dateStr));
+    const badge = document.createElement("span");
+    badge.className = "journal-list-badge";
+    badge.textContent = "Habits";
+    meta.appendChild(badge);
+  } else {
     title.textContent = entry.title.trim() || "Untitled entry";
-    const meta = document.createElement("p");
-    meta.className = "journal-list-meta";
-    meta.append(
-      document.createTextNode(
-        new Intl.DateTimeFormat(undefined, {
-          dateStyle: "medium",
-          timeStyle: "short",
-        }).format(new Date(entry.at)),
-      ),
-    );
+    meta.append(document.createTextNode(dateStr));
     if (entry.checkinAt) {
       const badge = document.createElement("span");
       badge.className = "journal-list-badge";
       badge.textContent = "Check-in";
       meta.appendChild(badge);
     }
-    a.append(title, meta);
-    li.appendChild(a);
-    els.journalEntriesList.appendChild(li);
-  });
+  }
+  a.append(title, meta);
+  li.appendChild(a);
+  ul.appendChild(li);
+}
+
+function renderJournalList() {
+  renderCheckins();
+  const entries = [...loadJournal()].sort((a, b) => new Date(b.at) - new Date(a.at));
+  const habitTitle = JOURNAL_TITLE_HABITS_SYNC;
+  const regular = entries.filter((e) => e.title.trim() !== habitTitle);
+  const habitLogs = entries.filter((e) => e.title.trim() === habitTitle);
+
+  els.journalEntriesList.innerHTML = "";
+  els.journalEmptyHint.hidden = regular.length > 0;
+  regular.forEach((entry) => appendJournalListItem(els.journalEntriesList, entry, "writing"));
+
+  if (els.journalHabitsEntriesList) {
+    els.journalHabitsEntriesList.innerHTML = "";
+    habitLogs.forEach((entry) => appendJournalListItem(els.journalHabitsEntriesList, entry, "habit"));
+  }
+  if (els.journalHabitsEmptyHint) {
+    els.journalHabitsEmptyHint.hidden = habitLogs.length > 0;
+  }
 }
 
 function showJournalList() {
@@ -1509,30 +2163,10 @@ function renderQuote() {
   els.quoteBy.textContent = q.by ? `— ${q.by}` : "";
 }
 
-function renderMoodTrend() {
-  const withMood = loadNotes().filter((c) => typeof c.mood === "number");
-  if (withMood.length < 2) {
-    els.checkinTrendBlock.hidden = true;
-    return;
-  }
-  els.checkinTrendBlock.hidden = false;
-  const slice = withMood.slice(0, 14).reverse();
-  els.checkinTrend.innerHTML = "";
-  slice.forEach((c) => {
-    const div = document.createElement("div");
-    div.className = "trend-cell";
-    div.setAttribute("data-level", String(c.mood));
-    div.style.height = `${18 + c.mood * 8}px`;
-    div.title = `${new Intl.DateTimeFormat(undefined, { dateStyle: "short", timeStyle: "short" }).format(new Date(c.at))} · mood ${c.mood}`;
-    els.checkinTrend.appendChild(div);
-  });
-  els.checkinTrendLegend.textContent =
-    "Each bar is one check-in — height reflects mood (older ← → newer).";
-}
-
 function renderCheckins() {
+  if (!els.journalCheckinsList) return;
   const notes = loadNotes();
-  els.checkinList.innerHTML = "";
+  els.journalCheckinsList.innerHTML = "";
   notes.slice(0, 12).forEach((n) => {
     const li = document.createElement("li");
     const dateEl = document.createElement("span");
@@ -1579,9 +2213,8 @@ function renderCheckins() {
         li.appendChild(p);
       }
     }
-    els.checkinList.appendChild(li);
+    els.journalCheckinsList.appendChild(li);
   });
-  renderMoodTrend();
 }
 
 function loadHabitsState() {
@@ -1612,6 +2245,359 @@ function saveHabitsState(state) {
       }),
     );
   } catch (_) {}
+}
+
+function habitEntryElIsValid(row) {
+  if (!row) return false;
+  const act = row.querySelector(".habit-log-activity")?.value.trim() || "";
+  const mode = row.getAttribute("data-habit-tracker");
+  const habitId = row.getAttribute("data-habit-id") || "";
+
+  const minMain = row.querySelector(".habit-log-minutes");
+  const drinkDet = row.querySelector(".habit-log-drink-details");
+  const secMin = row.querySelector(".habit-log-secondary-minutes");
+  const secText = row.querySelector(".habit-log-secondary-text");
+
+  if (!act) {
+    const orphan =
+      (minMain && minMain.value.trim()) ||
+      (drinkDet && drinkDet.value.trim()) ||
+      (secMin && secMin.value.trim()) ||
+      (secText && secText.value.trim());
+    return !orphan;
+  }
+
+  if (mode === "drink") return true;
+
+  if (mode === "movement" || mode === "custom") {
+    const raw = minMain?.value.trim() || "";
+    const n = raw === "" ? NaN : Number(raw);
+    return Number.isFinite(n) && n >= 1 && n <= 999;
+  }
+
+  if (mode === "dynamic") {
+    const spec = getHabitSecondarySpec(habitId, act);
+    if (!spec) return false;
+    if (spec.type === "minutes") {
+      const raw = secMin?.value.trim() || "";
+      const n = raw === "" ? NaN : Number(raw);
+      return Number.isFinite(n) && n >= 1 && n <= 999;
+    }
+    if (!spec.optional && !(secText && secText.value.trim())) return false;
+    return true;
+  }
+
+  return false;
+}
+
+function collectSingleHabitLogFromEntry(row) {
+  if (!row) return null;
+  const kind = row.getAttribute("data-habit-kind");
+  const habitId = row.getAttribute("data-habit-id") || "";
+  const habitLabel = row.getAttribute("data-habit-label") || "";
+  const act = row.querySelector(".habit-log-activity")?.value.trim() || "";
+  const mode = row.getAttribute("data-habit-tracker");
+  if (!act) return null;
+
+  const base = {
+    habitKind: kind === "custom" ? "custom" : "suggested",
+    habitId,
+    habitLabel: habitLabel.slice(0, 120),
+    activity: act.slice(0, 120),
+  };
+
+  if (mode === "drink") {
+    const det = row.querySelector(".habit-log-drink-details")?.value.trim().slice(0, 200) || "";
+    return { ...base, minutes: null, details: det || undefined };
+  }
+
+  if (mode === "movement" || mode === "custom") {
+    const rawMin = row.querySelector(".habit-log-minutes")?.value.trim() || "";
+    const minutes = rawMin === "" ? NaN : Number(rawMin);
+    if (!Number.isFinite(minutes) || minutes < 1) return null;
+    return { ...base, minutes: Math.min(999, Math.floor(minutes)) };
+  }
+
+  if (mode === "dynamic") {
+    const spec = getHabitSecondarySpec(habitId, act);
+    if (!spec) return null;
+    if (spec.type === "minutes") {
+      const raw = row.querySelector(".habit-log-secondary-minutes")?.value.trim() || "";
+      const minutes = raw === "" ? NaN : Number(raw);
+      if (!Number.isFinite(minutes) || minutes < 1) return null;
+      return { ...base, minutes: Math.min(999, Math.floor(minutes)) };
+    }
+    const det = row.querySelector(".habit-log-secondary-text")?.value.trim().slice(0, 200) || "";
+    return { ...base, minutes: null, details: det || undefined };
+  }
+
+  return null;
+}
+
+function getHabitsLogDateKey() {
+  return els.habitsLogDate?.value || localDateKeyFromMs(Date.now());
+}
+
+function persistHabitsDayLogs(dateKey, logs) {
+  const normalized = logs.map(normalizeHabitLogEntry).filter(Boolean).slice(0, HABIT_LOG_MAX_PER_DAY);
+  const all = loadHabitDayLogs();
+  if (!normalized.length) delete all[dateKey];
+  else all[dateKey] = normalized;
+  saveHabitDayLogsAll(all);
+  const finalLogs = all[dateKey] || [];
+  syncHabitsToJournalForDay(dateKey, finalLogs);
+  rememberHabitActivitiesFromLogs(finalLogs);
+  renderHabitCheckinRows();
+}
+
+function updateHabitRowSecondary(row, habitId, prevLog) {
+  const slot = row.querySelector(".habit-log-secondary-slot");
+  if (!slot) return;
+  slot.innerHTML = "";
+  const act = row.querySelector(".habit-log-activity")?.value.trim() || "";
+  if (!act) return;
+  const spec = getHabitSecondarySpec(habitId, act);
+  if (!spec) return;
+
+  const lab = document.createElement("label");
+  lab.className = "field habit-log-field habit-log-field--secondary";
+
+  const span = document.createElement("span");
+  span.className = "field-label";
+  span.textContent = spec.label;
+
+  if (spec.type === "minutes") {
+    const inp = document.createElement("input");
+    inp.type = "number";
+    inp.className = "habit-log-secondary-minutes";
+    inp.min = "1";
+    inp.max = "999";
+    inp.step = "1";
+    inp.placeholder = "—";
+    inp.setAttribute("inputmode", "numeric");
+    if (prevLog != null && prevLog.minutes != null && Number.isFinite(prevLog.minutes)) {
+      inp.value = String(prevLog.minutes);
+    }
+    lab.append(span, inp);
+  } else {
+    const inp = document.createElement("input");
+    inp.type = "text";
+    inp.className = "habit-log-secondary-text";
+    inp.maxLength = 200;
+    inp.placeholder = spec.optional ? "Optional" : "Required";
+    if (prevLog != null) {
+      const d = prevLog.details != null ? String(prevLog.details).trim() : "";
+      if (d) inp.value = d;
+    }
+    lab.append(span, inp);
+  }
+  slot.appendChild(lab);
+}
+
+function habitTrackerModeForItem(item) {
+  if (item.kind !== "suggested") return "custom";
+  if (item.id === "movement") return "movement";
+  if (item.id === "alt-drink") return "drink";
+  if (HABIT_DYNAMIC_IDS.includes(item.id)) return "dynamic";
+  return "movement";
+}
+
+function createHabitLogEntryEl(item, tracker, prevLog, listId) {
+  const entry = document.createElement("div");
+  entry.className = "habit-log-entry";
+  entry.setAttribute("data-habit-kind", item.kind);
+  entry.setAttribute("data-habit-id", item.id);
+  entry.setAttribute("data-habit-label", item.label);
+  entry.setAttribute("data-habit-tracker", tracker);
+
+  const fields = document.createElement("div");
+  fields.className = "habit-log-row-fields";
+
+  const actLab = document.createElement("label");
+  actLab.className = "field habit-log-field";
+  const actLabSpan = document.createElement("span");
+  actLabSpan.className = "field-label";
+  if (item.kind === "custom") actLabSpan.textContent = "What you did";
+  else if (item.id === "alt-drink") actLabSpan.textContent = "Type of drink (pick or type)";
+  else actLabSpan.textContent = "Activity (pick or type)";
+
+  const actInput = document.createElement("input");
+  actInput.type = "text";
+  actInput.className = "habit-log-activity";
+  actInput.setAttribute("autocomplete", "off");
+  actInput.maxLength = 120;
+  actInput.placeholder =
+    item.kind === "suggested"
+      ? "Suggestions appear as you type — or enter your own"
+      : "Describe briefly";
+  if (prevLog) actInput.value = prevLog.activity;
+  if (listId) actInput.setAttribute("list", listId);
+  actLab.append(actLabSpan, actInput);
+
+  const slot = document.createElement("div");
+  slot.className = "habit-log-secondary-slot";
+
+  if (tracker === "movement" || tracker === "custom") {
+    const minLab = document.createElement("label");
+    minLab.className = "field habit-log-field habit-log-field--minutes";
+    const minLabSpan = document.createElement("span");
+    minLabSpan.className = "field-label";
+    minLabSpan.textContent = "Minutes";
+    const minInput = document.createElement("input");
+    minInput.type = "number";
+    minInput.className = "habit-log-minutes";
+    minInput.min = "1";
+    minInput.max = "999";
+    minInput.step = "1";
+    minInput.placeholder = "—";
+    minInput.setAttribute("inputmode", "numeric");
+    if (prevLog && prevLog.minutes != null && Number.isFinite(prevLog.minutes)) {
+      minInput.value = String(prevLog.minutes);
+    }
+    minLab.append(minLabSpan, minInput);
+    slot.appendChild(minLab);
+  } else if (tracker === "drink") {
+    const detLab = document.createElement("label");
+    detLab.className = "field habit-log-field habit-log-field--details";
+    const detSpan = document.createElement("span");
+    detSpan.className = "field-label";
+    detSpan.textContent = "Details";
+    const detInput = document.createElement("input");
+    detInput.type = "text";
+    detInput.className = "habit-log-drink-details";
+    detInput.maxLength = 200;
+    detInput.placeholder = "Optional";
+    if (prevLog && prevLog.details) detInput.value = String(prevLog.details);
+    detLab.append(detSpan, detInput);
+    slot.appendChild(detLab);
+  }
+
+  fields.append(actLab, slot);
+  entry.appendChild(fields);
+
+  if (tracker === "dynamic") {
+    updateHabitRowSecondary(entry, item.id, prevLog);
+  }
+  return entry;
+}
+
+function syncHabitsLogDateNav() {
+  const todayKey = localDateKeyFromMs(Date.now());
+  if (els.habitsLogDate) els.habitsLogDate.max = todayKey;
+  const cur = els.habitsLogDate?.value || todayKey;
+  if (els.habitsLogNextDay) {
+    const atToday = cur >= todayKey;
+    els.habitsLogNextDay.disabled = atToday;
+    els.habitsLogNextDay.setAttribute("aria-disabled", atToday ? "true" : "false");
+  }
+}
+
+function renderHabitCheckinRows() {
+  if (!els.habitLogFieldset || !els.habitLogRows) return;
+  const todayKey = localDateKeyFromMs(Date.now());
+  if (els.habitsLogDate) {
+    els.habitsLogDate.max = todayKey;
+    if (!els.habitsLogDate.value) els.habitsLogDate.value = todayKey;
+  }
+  syncHabitsLogDateNav();
+  const dateKey = els.habitsLogDate?.value || todayKey;
+  const savedForDay = loadHabitDayLogs()[dateKey] || [];
+
+  const state = loadHabitsState();
+  const items = [];
+  state.suggestedOn.forEach((hid) => {
+    const def = SUGGESTED_HABIT_BY_ID[hid];
+    if (def) items.push({ kind: "suggested", id: def.id, label: def.title });
+  });
+  state.custom.forEach((line) => {
+    items.push({ kind: "custom", id: line, label: line });
+  });
+  els.habitLogRows.innerHTML = "";
+  if (items.length === 0) {
+    els.habitLogFieldset.hidden = true;
+    return;
+  }
+  els.habitLogFieldset.hidden = false;
+
+  items.forEach((item, habitIdx) => {
+    const tracker = habitTrackerModeForItem(item);
+    const listId =
+      item.kind === "suggested" && HABIT_ACTIVITY_PRESETS[item.id] ? `habit-dl-${item.id}` : null;
+
+    const group = document.createElement("div");
+    group.className = "habit-log-group habit-log-group--compact";
+    group.dataset.habitKind = item.kind;
+    group.dataset.habitId = item.id;
+    group.dataset.habitLabel = item.label;
+    group.dataset.habitTracker = tracker;
+    if (listId) group.dataset.habitListId = listId;
+
+    if (listId) {
+      const dl = document.createElement("datalist");
+      dl.id = listId;
+      mergedActivityOptions(item.id).forEach((v) => {
+        const opt = document.createElement("option");
+        opt.value = v;
+        dl.appendChild(opt);
+      });
+      group.appendChild(dl);
+    }
+
+    const draftId = `habit-draft-${habitIdx}`;
+    const top = document.createElement("div");
+    top.className = "habit-log-group-top";
+    const emoji = document.createElement("span");
+    emoji.className = "habit-log-emoji";
+    emoji.setAttribute("aria-hidden", "true");
+    emoji.textContent = habitLogEmojiForItem(item);
+    const title = document.createElement("span");
+    title.className = "habit-log-title-text";
+    title.textContent = item.label;
+    const addBtn = document.createElement("button");
+    addBtn.type = "button";
+    addBtn.className = "btn btn-ghost habit-log-add-btn";
+    addBtn.innerHTML = '<span class="habit-log-add-icon" aria-hidden="true">＋</span> Add';
+    addBtn.setAttribute("aria-expanded", "false");
+    addBtn.setAttribute("aria-controls", draftId);
+    top.append(emoji, title, addBtn);
+
+    const savedList = document.createElement("ul");
+    savedList.className = "habit-log-saved-list";
+    savedList.setAttribute("aria-label", `Saved logs for ${item.label}`);
+    let anySaved = false;
+    savedForDay.forEach((log, globalIdx) => {
+      if (log.habitKind !== item.kind || log.habitId !== item.id) return;
+      anySaved = true;
+      const li = document.createElement("li");
+      li.className = "habit-log-saved-row";
+      const text = document.createElement("span");
+      text.className = "habit-log-saved-text";
+      text.textContent = formatHabitLogSummaryLine(log);
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "btn btn-ghost habit-log-delete-saved";
+      del.innerHTML = '<span aria-hidden="true">🗑️</span>';
+      del.setAttribute("aria-label", `Delete: ${formatHabitLogSummaryLine(log)}`);
+      del.dataset.logDayIndex = String(globalIdx);
+      li.append(text, del);
+      savedList.appendChild(li);
+    });
+    if (!anySaved) {
+      savedList.classList.add("habit-log-saved-list--empty");
+      const emptyLi = document.createElement("li");
+      emptyLi.className = "habit-log-saved-empty";
+      emptyLi.textContent = "Nothing logged yet for this day.";
+      savedList.appendChild(emptyLi);
+    }
+
+    const draftWrap = document.createElement("div");
+    draftWrap.className = "habit-log-draft-wrap";
+    draftWrap.id = draftId;
+    draftWrap.hidden = true;
+
+    group.append(top, savedList, draftWrap);
+    els.habitLogRows.appendChild(group);
+  });
 }
 
 function renderHabits() {
@@ -1669,6 +2655,7 @@ function renderHabits() {
     li.append(span, rm);
     els.habitsCustomList.appendChild(li);
   });
+  renderHabitCheckinRows();
 }
 
 function buildEmotionChips() {
@@ -1730,12 +2717,37 @@ function updateDashboard(start) {
   els.hoursMins.textContent = `${hours}h ${minutes}m`;
   els.sinceDisplay.textContent = formatSince(start);
 
+  const totalHours = Math.floor(ms / 3600000);
+  if (els.streakAltHours) els.streakAltHours.textContent = String(totalHours);
+  if (els.streakAltBreakdown) {
+    const wk = Math.floor(days / 7);
+    const rd = days % 7;
+    if (wk > 0) {
+      els.streakAltBreakdown.textContent = `That’s ${wk} week${wk === 1 ? "" : "s"} and ${rd} day${rd === 1 ? "" : "s"} on the calendar.`;
+    } else {
+      els.streakAltBreakdown.textContent =
+        rd === 0 ? "First day — every hour counts." : `${rd} day${rd === 1 ? "" : "s"} on the calendar.`;
+    }
+  }
+  if (els.streakDayDots) {
+    els.streakDayDots.innerHTML = "";
+    const filled = Math.min(10, days);
+    for (let i = 0; i < 10; i += 1) {
+      const dot = document.createElement("span");
+      dot.className = "streak-day-dot" + (i < filled ? " streak-day-dot--on" : "");
+      dot.setAttribute("aria-hidden", "true");
+      els.streakDayDots.appendChild(dot);
+    }
+  }
+
   const next = nextMilestone(days);
   const prev = prevMilestone(days);
   els.milestoneText.textContent =
     days >= MILESTONES[MILESTONES.length - 1]
       ? `You’ve passed ${prev} days. Next ring: ${next} days.`
       : `Day ${next} — you’re building toward it.`;
+
+  if (els.milestoneTargetNum) els.milestoneTargetNum.textContent = String(next);
 
   let pct = 0;
   if (next > prev) {
@@ -1747,6 +2759,10 @@ function updateDashboard(start) {
   }
   els.milestoneBar.style.width = `${pct}%`;
   els.milestoneBarWrap.setAttribute("aria-valuenow", String(pct));
+  if (els.milestonePctNote) {
+    els.milestonePctNote.textContent =
+      pct >= 100 ? "You’ve reached this stretch — next ring ahead." : `${pct}% of the way to your next day mark.`;
+  }
 }
 
 function startTicking(start) {
@@ -1762,11 +2778,44 @@ function stopTicking() {
   }
 }
 
+const STREAK_CAROUSEL_SLIDE_COUNT = 2;
+let streakCarouselIndex = 0;
+
+function applyStreakCarouselSlide(i) {
+  if (!els.streakCarouselTrack) return;
+  streakCarouselIndex =
+    ((i % STREAK_CAROUSEL_SLIDE_COUNT) + STREAK_CAROUSEL_SLIDE_COUNT) % STREAK_CAROUSEL_SLIDE_COUNT;
+  els.streakCarouselTrack.style.transform = `translateX(-${streakCarouselIndex * 50}%)`;
+  if (els.streakSlide0) els.streakSlide0.setAttribute("aria-hidden", streakCarouselIndex === 0 ? "false" : "true");
+  if (els.streakSlide1) els.streakSlide1.setAttribute("aria-hidden", streakCarouselIndex === 1 ? "false" : "true");
+  document.querySelectorAll(".streak-carousel-tab").forEach((tab, j) => {
+    const on = j === streakCarouselIndex;
+    tab.classList.toggle("is-active", on);
+    tab.setAttribute("aria-selected", on ? "true" : "false");
+  });
+}
+
+function bindStreakCarousel() {
+  if (!els.streakCarouselTrack) return;
+  els.streakCarouselPrev?.addEventListener("click", () => applyStreakCarouselSlide(streakCarouselIndex - 1));
+  els.streakCarouselNext?.addEventListener("click", () => applyStreakCarouselSlide(streakCarouselIndex + 1));
+  document.querySelectorAll(".streak-carousel-tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const n = Number(tab.getAttribute("data-streak-slide"), 10);
+      if (Number.isFinite(n)) applyStreakCarouselSlide(n);
+    });
+  });
+}
+
+bindStreakCarousel();
+
 function showSetup() {
   els.setupPanel.hidden = false;
   els.dashboard.hidden = true;
   els.viewJournal.hidden = true;
   if (els.viewResources) els.viewResources.hidden = true;
+  if (els.viewInsights) els.viewInsights.hidden = true;
+  if (els.viewHabits) els.viewHabits.hidden = true;
   els.siteNav.hidden = true;
   stopTicking();
   resetSetupWizard();
@@ -1776,18 +2825,18 @@ function showSetup() {
 
 function showDashboardTracked(start) {
   enterAppShell();
-  els.dashStreakBlock.hidden = false;
+  if (els.streakCarouselWrap) els.streakCarouselWrap.hidden = false;
   els.dashIntentBlock.hidden = true;
-  els.dashMilestoneCard.hidden = false;
+  if (els.dashMilestoneCard) els.dashMilestoneCard.hidden = false;
   els.btnSlip.hidden = false;
   startTicking(start);
 }
 
 function showDashboardPreparing() {
   enterAppShell();
-  els.dashStreakBlock.hidden = true;
+  if (els.streakCarouselWrap) els.streakCarouselWrap.hidden = true;
   els.dashIntentBlock.hidden = false;
-  els.dashMilestoneCard.hidden = true;
+  if (els.dashMilestoneCard) els.dashMilestoneCard.hidden = true;
   els.btnSlip.hidden = true;
   stopTicking();
 }
@@ -1894,6 +2943,157 @@ els.habitCustomInput.addEventListener("keydown", (e) => {
   }
 });
 
+function setHabitsLogDateAndRender(dateKey) {
+  if (!els.habitsLogDate) return;
+  const todayKey = localDateKeyFromMs(Date.now());
+  const next = dateKey > todayKey ? todayKey : dateKey;
+  els.habitsLogDate.value = next;
+  renderHabitCheckinRows();
+}
+
+if (els.habitsLogPrevDay) {
+  els.habitsLogPrevDay.addEventListener("click", () => {
+    const cur = els.habitsLogDate?.value;
+    if (!cur) return;
+    setHabitsLogDateAndRender(dateKeyAddDays(cur, -1));
+  });
+}
+
+if (els.habitsLogNextDay) {
+  els.habitsLogNextDay.addEventListener("click", () => {
+    if (els.habitsLogNextDay.disabled) return;
+    const cur = els.habitsLogDate?.value;
+    if (!cur) return;
+    setHabitsLogDateAndRender(dateKeyAddDays(cur, 1));
+  });
+}
+
+if (els.habitsLogToday) {
+  els.habitsLogToday.addEventListener("click", () => {
+    setHabitsLogDateAndRender(localDateKeyFromMs(Date.now()));
+  });
+}
+
+if (els.habitsLogDate) {
+  els.habitsLogDate.addEventListener("change", () => renderHabitCheckinRows());
+  els.habitsLogDate.addEventListener("input", () => syncHabitsLogDateNav());
+}
+
+if (els.habitLogRows) {
+  const refreshDynamicSecondary = (e) => {
+    const t = e.target;
+    if (!t || !t.classList || !t.classList.contains("habit-log-activity")) return;
+    const row = t.closest(".habit-log-entry");
+    if (!row || row.getAttribute("data-habit-tracker") !== "dynamic") return;
+    updateHabitRowSecondary(row, row.getAttribute("data-habit-id") || "", null);
+  };
+  els.habitLogRows.addEventListener("input", refreshDynamicSecondary);
+  els.habitLogRows.addEventListener("change", refreshDynamicSecondary);
+
+  els.habitLogRows.addEventListener("click", (e) => {
+    const delBtn = e.target.closest(".habit-log-delete-saved");
+    if (delBtn) {
+      e.preventDefault();
+      const idx = Number(delBtn.dataset.logDayIndex, 10);
+      if (!Number.isInteger(idx) || idx < 0) return;
+      const dateKey = getHabitsLogDateKey();
+      const all = loadHabitDayLogs();
+      const logs = [...(all[dateKey] || [])];
+      if (idx >= logs.length) return;
+      logs.splice(idx, 1);
+      persistHabitsDayLogs(dateKey, logs);
+      return;
+    }
+
+    const saveEntry = e.target.closest(".habit-log-save-entry");
+    if (saveEntry) {
+      e.preventDefault();
+      const draftWrap = saveEntry.closest(".habit-log-draft-wrap");
+      const draftEl = draftWrap?.querySelector(".habit-log-entry");
+      if (!habitEntryElIsValid(draftEl)) {
+        alert(
+          "Complete every field for this entry, or tap Cancel. Movement and custom habits need minutes; alcohol-free drink needs a type; other suggested habits need the second field for that activity.",
+        );
+        return;
+      }
+      const raw = collectSingleHabitLogFromEntry(draftEl);
+      const normalized = normalizeHabitLogEntry(raw);
+      if (!normalized) {
+        alert("Could not save that entry. Check the fields and try again.");
+        return;
+      }
+      const dateKey = getHabitsLogDateKey();
+      const all = loadHabitDayLogs();
+      const logs = [...(all[dateKey] || [])];
+      if (logs.length >= HABIT_LOG_MAX_PER_DAY) {
+        alert(`You can save up to ${HABIT_LOG_MAX_PER_DAY} habit lines per day.`);
+        return;
+      }
+      const sameHabit = logs.filter(
+        (l) => l.habitKind === normalized.habitKind && l.habitId === normalized.habitId,
+      ).length;
+      if (sameHabit >= HABIT_LOG_MAX_ENTRIES_PER_HABIT) {
+        alert(`You can save up to ${HABIT_LOG_MAX_ENTRIES_PER_HABIT} lines per habit per day.`);
+        return;
+      }
+      logs.push(normalized);
+      persistHabitsDayLogs(dateKey, logs);
+      return;
+    }
+
+    const cancelBtn = e.target.closest(".habit-log-draft-cancel");
+    if (cancelBtn) {
+      e.preventDefault();
+      const draftWrap = cancelBtn.closest(".habit-log-draft-wrap");
+      const group = cancelBtn.closest(".habit-log-group");
+      if (draftWrap) {
+        draftWrap.innerHTML = "";
+        draftWrap.hidden = true;
+      }
+      group?.querySelector(".habit-log-add-btn")?.setAttribute("aria-expanded", "false");
+      return;
+    }
+
+    const addBtn = e.target.closest(".habit-log-add-btn");
+    if (addBtn) {
+      e.preventDefault();
+      const group = addBtn.closest(".habit-log-group");
+      if (!group) return;
+      const draftWrap = group.querySelector(".habit-log-draft-wrap");
+      const item = {
+        kind: group.dataset.habitKind,
+        id: group.dataset.habitId,
+        label: group.dataset.habitLabel,
+      };
+      const tracker = group.dataset.habitTracker;
+      const listId = group.dataset.habitListId || null;
+      if (draftWrap && !draftWrap.hidden && draftWrap.querySelector(".habit-log-entry")) {
+        draftWrap.querySelector(".habit-log-activity")?.focus();
+        return;
+      }
+      if (!draftWrap) return;
+      draftWrap.innerHTML = "";
+      const draft = createHabitLogEntryEl(item, tracker, null, listId);
+      draft.classList.add("habit-log-draft");
+      const actions = document.createElement("div");
+      actions.className = "habit-log-draft-actions";
+      const saveBtn = document.createElement("button");
+      saveBtn.type = "button";
+      saveBtn.className = "btn btn-primary habit-log-save-entry";
+      saveBtn.textContent = "Save entry";
+      const cancelDraftBtn = document.createElement("button");
+      cancelDraftBtn.type = "button";
+      cancelDraftBtn.className = "btn btn-ghost habit-log-draft-cancel";
+      cancelDraftBtn.textContent = "Cancel";
+      actions.append(saveBtn, cancelDraftBtn);
+      draftWrap.append(draft, actions);
+      draftWrap.hidden = false;
+      addBtn.setAttribute("aria-expanded", "true");
+      draft.querySelector(".habit-log-activity")?.focus();
+    }
+  });
+}
+
 els.journalBackCompose.addEventListener("click", () => {
   location.hash = "#/journal";
 });
@@ -1904,12 +3104,21 @@ els.journalBackRead.addEventListener("click", () => {
 
 els.journalLinkCheckin.addEventListener("change", syncJournalLinkUI);
 
-els.healthLearnMore.addEventListener("click", () => {
+els.healthLearnMore?.addEventListener("click", () => {
   const willOpen = els.healthExpanded.hidden;
   els.healthExpanded.hidden = !willOpen;
   els.healthLearnMore.setAttribute("aria-expanded", willOpen ? "true" : "false");
   els.healthLearnMore.textContent = willOpen ? "Show less" : "Learn more";
 });
+
+if (els.habitsExploreToggle && els.habitsExploreExpanded) {
+  els.habitsExploreToggle.addEventListener("click", () => {
+    const willOpen = els.habitsExploreExpanded.hidden;
+    els.habitsExploreExpanded.hidden = !willOpen;
+    els.habitsExploreToggle.setAttribute("aria-expanded", willOpen ? "true" : "false");
+    els.habitsExploreToggle.textContent = willOpen ? "Hide suggestions" : "Show suggestions";
+  });
+}
 
 els.journalForm.addEventListener("submit", (e) => {
   e.preventDefault();
@@ -2020,6 +3229,8 @@ function init() {
     if (!isAppReady()) return;
     applyRoute();
   });
+
+  bindResourcesPageNav();
 
   const start = loadStart();
   if (start) {
