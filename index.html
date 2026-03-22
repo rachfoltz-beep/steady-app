@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <script>
+    (function () {
+      try {
+        if (localStorage.getItem("steady_theme") === "dark") {
+          document.documentElement.setAttribute("data-theme", "dark");
+        }
+      } catch (_) {}
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Private streak tracker for alcohol-free days" />
+  <title>Steady — alcohol-free streak</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div class="bg-gradient" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <div class="header-row">
+      <div class="header-brand">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">◇</span>
+          <span class="brand-name">Steady</span>
+        </div>
+        <p class="tagline">Your streak stays in this browser unless you export a backup — nothing is sent to our servers.</p>
+      </div>
+      <button
+        type="button"
+        class="theme-toggle"
+        id="btn-header-settings"
+        aria-label="Open settings"
+        title="Settings"
+      >
+        <svg class="theme-toggle-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path
+            d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </button>
+    </div>
+    <nav class="site-nav" id="site-nav" aria-label="Main pages" hidden>
+      <a href="#/home" class="site-nav-link" data-nav-link="home">Home</a>
+      <a href="#/journal" class="site-nav-link" data-nav-link="journal">Journal</a>
+      <a href="#/resources" class="site-nav-link" data-nav-link="resources">Resources</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="panel setup-panel" id="setup-panel" hidden>
+      <p class="setup-progress" id="setup-progress" aria-live="polite">
+        Step <span id="setup-step-num">1</span> of <span id="setup-step-total">2</span>
+      </p>
+
+      <div class="setup-step" id="setup-step-choose">
+        <h1>Where are you with alcohol right now?</h1>
+        <p class="lede">Step 1 helps us set up your tracker the way that fits you. Nothing leaves this device.</p>
+        <div class="choice-grid" role="group" aria-label="How to set up your tracker">
+          <button type="button" class="choice-card" data-setup-path="last-drink">
+            <span class="choice-title">I know the date of my last drink</span>
+            <span class="choice-desc">We’ll start your alcohol-free clock from that moment.</span>
+          </button>
+          <button type="button" class="choice-card" data-setup-path="days-since">
+            <span class="choice-title">I know how many days it’s been</span>
+            <span class="choice-desc">Tell us roughly how long you’ve been alcohol-free.</span>
+          </button>
+          <button type="button" class="choice-card" data-setup-path="not-yet">
+            <span class="choice-title">I haven’t quit yet, but I want to</span>
+            <span class="choice-desc">No timer yet — we’ll focus on motivation until you’re ready.</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="setup-step" id="setup-step-last-drink" hidden>
+        <div class="setup-back-row">
+          <button type="button" class="btn btn-ghost setup-back" id="setup-back-last-drink" aria-label="Back to previous step">← Back</button>
+        </div>
+        <h1>When was your last drink?</h1>
+        <p class="lede">Use the date and time you finished your last drink — that’s when your alcohol-free streak begins.</p>
+        <form id="setup-form-last-drink" class="stack">
+          <label class="field">
+            <span class="field-label">Date</span>
+            <input type="date" id="start-date" required />
+          </label>
+          <label class="field">
+            <span class="field-label">Time (optional)</span>
+            <input type="time" id="start-time" />
+          </label>
+          <button type="submit" class="btn btn-primary">Continue</button>
+        </form>
+      </div>
+
+      <div class="setup-step" id="setup-step-days-since" hidden>
+        <div class="setup-back-row">
+          <button type="button" class="btn btn-ghost setup-back" id="setup-back-days-since" aria-label="Back to previous step">← Back</button>
+        </div>
+        <h1>How long has it been?</h1>
+        <p class="lede">Enter the number of full days since your last drink. If you’re starting fresh today, use 0.</p>
+        <form id="setup-form-days-since" class="stack">
+          <label class="field">
+            <span class="field-label">Days since last drink</span>
+            <input type="number" id="days-since-input" min="0" max="20000" step="1" value="0" required />
+          </label>
+          <button type="submit" class="btn btn-primary">Continue</button>
+        </form>
+      </div>
+
+      <div class="setup-step" id="setup-step-not-yet" hidden>
+        <div class="setup-back-row">
+          <button type="button" class="btn btn-ghost setup-back" id="setup-back-not-yet" aria-label="Back to previous step">← Back</button>
+        </div>
+        <h1>Glad you’re here</h1>
+        <p class="lede">Wanting to change is a real step. When you’re ready, you can start a clock from your last drink or from this moment — no pressure on the timeline.</p>
+        <button type="button" class="btn btn-primary" id="setup-finish-not-yet">Continue to the app</button>
+      </div>
+    </section>
+
+    <section class="panel dashboard app-view" id="dashboard" data-app-view="home" hidden>
+      <div class="streak-hero" id="dash-streak-block">
+        <p class="eyebrow">Alcohol-free for</p>
+        <div class="streak-numbers" aria-live="polite">
+          <span class="streak-unit">
+            <span class="streak-value" id="days">0</span>
+            <span class="streak-label">days</span>
+          </span>
+          <span class="streak-sep" aria-hidden="true">·</span>
+          <span class="streak-unit streak-sub">
+            <span class="streak-value-sm" id="hours-mins">0h 0m</span>
+          </span>
+        </div>
+        <p class="since-line">Since <strong id="since-display">—</strong></p>
+      </div>
+
+      <div class="intent-hero" id="dash-intent-block" hidden>
+        <p class="eyebrow">Getting ready</p>
+        <p class="intent-headline">You haven’t started a sober clock yet — and that’s okay.</p>
+        <p class="intent-copy">Use the check-in below to reflect. When you want a day counter, start the clock or tell us when your last drink was.</p>
+        <div class="intent-actions">
+          <button type="button" class="btn btn-primary" id="btn-start-clock-now">Start my alcohol-free clock now</button>
+          <button type="button" class="btn btn-secondary" id="btn-change-setup">Change my setup answers</button>
+        </div>
+      </div>
+
+      <div class="card quote-card">
+        <p class="quote" id="quote">—</p>
+        <p class="quote-attribution" id="quote-by"></p>
+      </div>
+
+      <div class="card health-card" id="health-benefits-card">
+        <h2 class="card-title">Health spotlight</h2>
+        <p class="card-sub health-card-sub">Science-based reasons cutting back or quitting can support your body—everyone’s path and timeline differ.</p>
+        <p class="health-teaser" id="health-teaser"></p>
+        <button
+          type="button"
+          class="btn btn-ghost health-learn-btn"
+          id="health-learn-more"
+          aria-expanded="false"
+          aria-controls="health-expanded"
+        >
+          Learn more
+        </button>
+        <div class="health-expanded" id="health-expanded" hidden>
+          <p class="health-detail" id="health-detail"></p>
+          <div class="health-sources">
+            <h3 class="health-sources-title">Sources</h3>
+            <ul class="health-sources-list" id="health-sources-list"></ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="card milestone-card" id="dash-milestone-card">
+        <h2 class="card-title">Next milestone</h2>
+        <p class="milestone-text" id="milestone-text">—</p>
+        <div class="progress-wrap" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="milestone-bar-wrap" aria-label="Progress to next milestone">
+          <div class="progress-bar" id="milestone-bar"></div>
+        </div>
+      </div>
+
+      <div class="card checkin-card" id="dash-checkin-card">
+        <h2 class="card-title">Daily check-in</h2>
+        <p class="card-sub">Log mood, energy, and feelings — over time you’ll see how they shift.</p>
+        <div class="trend-block" id="checkin-trend-block" hidden>
+          <p class="trend-label">Recent mood</p>
+          <div class="trend-strip" id="checkin-trend" role="img" aria-label="Mood over recent check-ins"></div>
+          <p class="trend-legend" id="checkin-trend-legend"></p>
+        </div>
+        <form id="checkin-form" class="stack tight checkin-form">
+          <fieldset class="scale-fieldset">
+            <legend class="field-label">Mood right now</legend>
+            <div class="scale-row" role="radiogroup" aria-label="Mood">
+              <label class="scale-pill scale-pill--emoji" aria-label="Very low mood">
+                <input type="radio" name="checkin-mood" value="1" />
+                <span class="scale-pill-emoji" aria-hidden="true">😢</span>
+              </label>
+              <label class="scale-pill scale-pill--emoji" aria-label="Low mood">
+                <input type="radio" name="checkin-mood" value="2" />
+                <span class="scale-pill-emoji" aria-hidden="true">🙁</span>
+              </label>
+              <label class="scale-pill scale-pill--emoji" aria-label="Neutral mood">
+                <input type="radio" name="checkin-mood" value="3" checked />
+                <span class="scale-pill-emoji" aria-hidden="true">😐</span>
+              </label>
+              <label class="scale-pill scale-pill--emoji" aria-label="Good mood">
+                <input type="radio" name="checkin-mood" value="4" />
+                <span class="scale-pill-emoji" aria-hidden="true">🙂</span>
+              </label>
+              <label class="scale-pill scale-pill--emoji" aria-label="Great mood">
+                <input type="radio" name="checkin-mood" value="5" />
+                <span class="scale-pill-emoji" aria-hidden="true">😄</span>
+              </label>
+            </div>
+            <p class="scale-caption" id="mood-caption">Okay — neutral</p>
+          </fieldset>
+          <fieldset class="scale-fieldset">
+            <legend class="field-label">Energy level</legend>
+            <div class="scale-row" role="radiogroup" aria-label="Energy">
+              <label class="scale-pill scale-pill--battery" aria-label="Drained — almost empty battery">
+                <input type="radio" name="checkin-energy" value="1" />
+                <span class="scale-pill-battery-wrap" aria-hidden="true">
+                  <svg class="battery-icon" viewBox="0 0 36 18" width="36" height="18" focusable="false">
+                    <rect x="1.5" y="3.5" width="28" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.5" />
+                    <path d="M31.5 6.5h3.5a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-3.5" fill="currentColor" opacity="0.35" />
+                    <rect x="4.5" y="6" width="3" height="6" rx="1" fill="currentColor" />
+                  </svg>
+                </span>
+              </label>
+              <label class="scale-pill scale-pill--battery" aria-label="Low energy">
+                <input type="radio" name="checkin-energy" value="2" />
+                <span class="scale-pill-battery-wrap" aria-hidden="true">
+                  <svg class="battery-icon" viewBox="0 0 36 18" width="36" height="18" focusable="false">
+                    <rect x="1.5" y="3.5" width="28" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.5" />
+                    <path d="M31.5 6.5h3.5a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-3.5" fill="currentColor" opacity="0.35" />
+                    <rect x="4.5" y="6" width="9" height="6" rx="1" fill="currentColor" />
+                  </svg>
+                </span>
+              </label>
+              <label class="scale-pill scale-pill--battery" aria-label="Moderate energy">
+                <input type="radio" name="checkin-energy" value="3" checked />
+                <span class="scale-pill-battery-wrap" aria-hidden="true">
+                  <svg class="battery-icon" viewBox="0 0 36 18" width="36" height="18" focusable="false">
+                    <rect x="1.5" y="3.5" width="28" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.5" />
+                    <path d="M31.5 6.5h3.5a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-3.5" fill="currentColor" opacity="0.35" />
+                    <rect x="4.5" y="6" width="15" height="6" rx="1" fill="currentColor" />
+                  </svg>
+                </span>
+              </label>
+              <label class="scale-pill scale-pill--battery" aria-label="High energy">
+                <input type="radio" name="checkin-energy" value="4" />
+                <span class="scale-pill-battery-wrap" aria-hidden="true">
+                  <svg class="battery-icon" viewBox="0 0 36 18" width="36" height="18" focusable="false">
+                    <rect x="1.5" y="3.5" width="28" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.5" />
+                    <path d="M31.5 6.5h3.5a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-3.5" fill="currentColor" opacity="0.35" />
+                    <rect x="4.5" y="6" width="21" height="6" rx="1" fill="currentColor" />
+                  </svg>
+                </span>
+              </label>
+              <label class="scale-pill scale-pill--battery" aria-label="Full energy">
+                <input type="radio" name="checkin-energy" value="5" />
+                <span class="scale-pill-battery-wrap" aria-hidden="true">
+                  <svg class="battery-icon" viewBox="0 0 36 18" width="36" height="18" focusable="false">
+                    <rect x="1.5" y="3.5" width="28" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.5" />
+                    <path d="M31.5 6.5h3.5a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-3.5" fill="currentColor" opacity="0.35" />
+                    <rect x="4.5" y="6" width="22" height="6" rx="1" fill="currentColor" />
+                  </svg>
+                </span>
+              </label>
+            </div>
+            <p class="scale-caption" id="energy-caption">Steady — moderate</p>
+          </fieldset>
+          <fieldset class="emotion-fieldset">
+            <legend class="field-label">What are you feeling? <span class="optional">(pick any)</span></legend>
+            <div class="chip-grid" id="emotion-chips"></div>
+          </fieldset>
+          <label class="field">
+            <span class="field-label">Anything else on your mind? <span class="optional">(optional)</span></span>
+            <textarea id="checkin-note" rows="2" placeholder="A win, a craving, something you’re proud of…"></textarea>
+          </label>
+          <button type="submit" class="btn btn-secondary">Save check-in</button>
+        </form>
+        <h3 class="history-heading">Recent check-ins</h3>
+        <ul class="checkin-list" id="checkin-list" aria-label="Recent check-ins"></ul>
+      </div>
+
+      <div class="card habits-card" id="dash-habits-card">
+        <h2 class="card-title">Habits to explore</h2>
+        <p class="card-sub">Try suggested ideas or add your own — small steady steps add up. Toggle suggestions on when you want to focus on them.</p>
+        <ul class="habits-suggested" id="habits-suggested-list" aria-label="Suggested habits"></ul>
+        <div class="habits-custom-block">
+          <label class="field">
+            <span class="field-label">Your own habit</span>
+            <div class="habits-custom-row">
+              <input type="text" id="habit-custom-input" maxlength="120" placeholder="e.g. Call a friend on hard days" autocomplete="off" />
+              <button type="button" class="btn btn-primary habits-add-btn" id="habit-custom-add">Add</button>
+            </div>
+          </label>
+          <ul class="habits-custom-list" id="habits-custom-list" aria-label="Your habits"></ul>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <button type="button" class="btn btn-ghost" id="btn-settings">Settings</button>
+        <button type="button" class="btn btn-text" id="btn-slip">I had a drink — reset kindly</button>
+      </div>
+    </section>
+
+    <section class="panel journal-panel app-view" id="view-journal" data-app-view="journal" hidden>
+      <div class="journal-screen" id="journal-screen-list">
+        <h1 class="journal-page-title">Journal</h1>
+        <p class="card-sub journal-lede">Longer reflections live here. Link a check-in to see mood, energy, and feelings alongside your writing.</p>
+        <div class="journal-toolbar">
+          <a href="#/journal/new" class="btn btn-primary">New entry</a>
+        </div>
+        <ul class="journal-list" id="journal-entries-list" aria-label="Journal entries"></ul>
+        <p class="journal-empty" id="journal-empty-hint" hidden>No entries yet. When you’re ready, add one — it stays on this device.</p>
+      </div>
+
+      <div class="journal-screen" id="journal-screen-compose" hidden>
+        <div class="journal-screen-head">
+          <button type="button" class="btn btn-ghost journal-back" id="journal-back-compose">← Back to journal</button>
+        </div>
+        <h1 class="journal-page-title">New entry</h1>
+        <form id="journal-form" class="stack tight">
+          <label class="field">
+            <span class="field-label">Title <span class="optional">(optional)</span></span>
+            <input type="text" id="journal-title" maxlength="120" placeholder="A few words to find this later" autocomplete="off" />
+          </label>
+          <label class="field">
+            <span class="field-label">Entry</span>
+            <textarea id="journal-body" rows="10" required placeholder="Write freely — what happened today, what you’re sitting with, what you hope for…"></textarea>
+          </label>
+          <fieldset class="journal-link-fieldset">
+            <legend class="field-label">Check-in snapshot</legend>
+            <label class="journal-check-label">
+              <input type="checkbox" id="journal-link-checkin" />
+              <span>Attach a check-in to this entry</span>
+            </label>
+            <label class="field journal-select-wrap" id="journal-checkin-field">
+              <span class="field-label">Which check-in?</span>
+              <select id="journal-checkin-select" aria-label="Check-in to attach"></select>
+            </label>
+            <p class="journal-link-hint" id="journal-no-checkins-hint" hidden>You don’t have any check-ins saved yet. You can add one from Home first, or save this entry without a link.</p>
+          </fieldset>
+          <button type="submit" class="btn btn-primary">Save entry</button>
+        </form>
+      </div>
+
+      <div class="journal-screen" id="journal-screen-read" hidden>
+        <div class="journal-screen-head">
+          <button type="button" class="btn btn-ghost journal-back" id="journal-back-read">← Back to journal</button>
+        </div>
+        <article class="journal-read-article" id="journal-read-root"></article>
+      </div>
+    </section>
+
+    <section class="panel resources-panel app-view" id="view-resources" data-app-view="resources" hidden>
+      <h1 class="journal-page-title">Resources</h1>
+      <p class="card-sub resources-lede">
+        Browse ideas for books, podcasts, and meetings. Add your own to-dos, save favorites, and tune recommendations with thumbs up or down
+        — everything stays on this device.
+      </p>
+      <div id="resources-carousels-root" class="resources-carousels-root"></div>
+      <p class="resources-reset-wrap">
+        <button type="button" class="btn btn-text resources-reset-hidden" id="resources-reset-dismissed">
+          Show hidden recommendations again
+        </button>
+      </p>
+
+      <div class="card resources-list-card">
+        <h2 class="card-title">Your list</h2>
+        <p class="card-sub">Track things you want to try — check them off when you’re done.</p>
+        <form id="resources-add-form" class="resources-add-row">
+          <label class="field resources-add-field">
+            <span class="field-label">Add a resource</span>
+            <input type="text" id="resources-add-title" maxlength="200" placeholder="e.g. SMART meeting Tuesday" autocomplete="off" />
+          </label>
+          <label class="field resources-add-field resources-add-url-field">
+            <span class="field-label">Link <span class="optional">(optional)</span></span>
+            <input type="text" id="resources-add-url" maxlength="500" placeholder="https://…" inputmode="url" autocomplete="off" />
+          </label>
+          <button type="submit" class="btn btn-primary resources-add-submit">Add</button>
+        </form>
+        <ul class="resources-my-list" id="resources-my-list" aria-label="Your resource list"></ul>
+        <p class="resources-empty-hint" id="resources-my-empty" hidden>Nothing here yet — add your own or use 👍 on a recommendation.</p>
+      </div>
+
+      <div class="card resources-favorites-card">
+        <h2 class="card-title">Favorites</h2>
+        <p class="card-sub">Quick access to picks you’ve starred from recommendations or your list.</p>
+        <ul class="resources-fav-list" id="resources-favorites-list" aria-label="Favorite resources"></ul>
+        <p class="resources-empty-hint" id="resources-fav-empty" hidden>No favorites yet — tap the star on a card or list item.</p>
+      </div>
+    </section>
+  </main>
+
+  <dialog class="modal" id="settings-modal" aria-labelledby="settings-title">
+    <div class="modal-inner">
+      <h2 id="settings-title">Settings</h2>
+
+      <div class="settings-section">
+        <h3 class="settings-subtitle">Appearance</h3>
+        <fieldset class="settings-fieldset-plain">
+          <legend class="field-label">Theme</legend>
+          <div class="theme-choice-row" role="radiogroup" aria-label="Color theme">
+            <label class="theme-choice">
+              <input type="radio" name="settings-theme" value="light" />
+              <span>Light</span>
+            </label>
+            <label class="theme-choice">
+              <input type="radio" name="settings-theme" value="dark" />
+              <span>Dark</span>
+            </label>
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="settings-section">
+        <h3 class="settings-subtitle">Sober clock</h3>
+        <form id="settings-form" class="stack tight">
+          <label class="field">
+            <span class="field-label">Streak start (date)</span>
+            <input type="date" id="settings-date" required />
+          </label>
+          <label class="field">
+            <span class="field-label">Streak start (time)</span>
+            <input type="time" id="settings-time" />
+          </label>
+          <div class="modal-actions">
+            <button type="submit" class="btn btn-primary">Save streak</button>
+            <button type="button" class="btn btn-ghost" id="settings-cancel">Close</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="settings-data-block">
+        <h3 class="settings-subtitle" id="settings-data-heading">Backup &amp; restore</h3>
+        <p class="settings-data-lede">
+          Data is saved in this browser (it survives closing the tab). To keep a copy elsewhere—iCloud, Google Drive, email, or another
+          computer—download a backup file. Restoring replaces all Steady data in this browser with the file’s contents.
+        </p>
+        <div class="settings-data-actions">
+          <button type="button" class="btn btn-secondary" id="btn-export-data">Download backup file</button>
+          <input type="file" id="import-file-input" accept="application/json,.json" hidden />
+          <button type="button" class="btn btn-ghost" id="btn-import-trigger">Restore from backup…</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="modal modal-slip" id="slip-modal" aria-labelledby="slip-title">
+    <div class="modal-inner">
+      <h2 id="slip-title">Starting fresh is still progress</h2>
+      <p class="modal-body">Relapse is common in recovery. What matters is what you do next. If you’d like, set a new start time — your check-ins, journal, and habits stay here unless you clear them in the browser.</p>
+      <form id="slip-form" class="stack">
+        <label class="field">
+          <span class="field-label">New start (date)</span>
+          <input type="date" id="slip-date" required />
+        </label>
+        <label class="field">
+          <span class="field-label">New start (time)</span>
+          <input type="time" id="slip-time" />
+        </label>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary">Set new streak</button>
+          <button type="button" class="btn btn-ghost" id="slip-cancel">Close</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <footer class="site-footer">
+    <p>If you’re in crisis or need support, reach out to a trusted person or local helpline. This app is not medical advice.</p>
+  </footer>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
