@@ -2,709 +2,171 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Poop Tracker — log the logs. All data stays on your device." />
+  <title>Poop Tracker</title>
+  <link rel="stylesheet" href="styles.css" />
   <script>
     (function () {
       try {
-        if (localStorage.getItem("steady_theme") === "dark") {
+        if (localStorage.getItem("poop_tracker_theme") === "dark") {
           document.documentElement.setAttribute("data-theme", "dark");
         }
       } catch (_) {}
     })();
   </script>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Private streak tracker for alcohol-free days" />
-  <title>Steady — alcohol-free streak</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
-  <div class="bg-gradient" aria-hidden="true"></div>
+
+  <div class="toon-backdrop" aria-hidden="true">
+    <span class="toon-cloud toon-cloud--1">☁️</span>
+    <span class="toon-cloud toon-cloud--2">☁️</span>
+    <span class="toon-float" aria-hidden="true">💩</span>
+  </div>
 
   <header class="site-header">
-    <div class="header-row">
-      <div class="header-brand">
-        <div class="brand">
-          <span class="brand-mark" aria-hidden="true">◇</span>
-          <span class="brand-name">Steady</span>
+    <div class="header-top">
+      <div class="brand-block">
+        <span class="brand-mascot" aria-hidden="true">
+          <svg class="mascot-svg" width="56" height="56" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <ellipse cx="32" cy="48" rx="18" ry="10" fill="var(--mascot-shadow)" opacity="0.35" />
+            <path d="M32 12c-8 0-14 6-14 14 0 4 2 8 5 10-2 3-3 7-3 11 0 10 8 14 12 14s12-4 12-14c0-4-1-8-3-11 3-2 5-6 5-10 0-8-6-14-14-14z" fill="var(--mascot-body)" stroke="var(--mascot-outline)" stroke-width="2" stroke-linejoin="round" />
+            <ellipse cx="26" cy="28" rx="3" ry="4" fill="var(--mascot-eye)" />
+            <ellipse cx="38" cy="28" rx="3" ry="4" fill="var(--mascot-eye)" />
+            <circle cx="27" cy="27" r="1.2" fill="#fff" />
+            <circle cx="39" cy="27" r="1.2" fill="#fff" />
+            <path d="M28 38c2 2 6 2 8 0" stroke="var(--mascot-outline)" stroke-width="2" stroke-linecap="round" fill="none" />
+          </svg>
+        </span>
+        <div>
+          <h1 class="site-title">Poop Tracker</h1>
+          <p class="site-tagline">Your throne entries stay in this browser. We’re not judging. (Okay, a little.)</p>
         </div>
-        <p class="tagline">Your streak stays in this browser unless you export a backup — nothing is sent to our servers.</p>
       </div>
-      <button
-        type="button"
-        class="theme-toggle"
-        id="btn-header-settings"
-        aria-label="Open settings"
-        title="Settings"
-      >
-        <svg class="theme-toggle-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <path
-            d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-          <path
-            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
+      <button type="button" class="btn-icon" id="btn-settings" aria-label="Open settings" title="Settings">
+        <span class="btn-icon-emoji" aria-hidden="true">⚙️</span>
       </button>
     </div>
-    <nav class="site-nav" id="site-nav" aria-label="Main pages" hidden>
-      <a href="#/home" class="site-nav-link" data-nav-link="home">Home</a>
-      <a href="#/insights" class="site-nav-link" data-nav-link="insights">Insights</a>
-      <a href="#/habits" class="site-nav-link" data-nav-link="habits">Habits</a>
-      <a href="#/journal" class="site-nav-link" data-nav-link="journal">Journal</a>
-      <a href="#/resources" class="site-nav-link" data-nav-link="resources">Resources</a>
+
+    <nav class="view-tabs" aria-label="Main views">
+      <button type="button" class="tab is-active" data-view="log" aria-selected="true">Log one</button>
+      <button type="button" class="tab" data-view="calendar" aria-selected="false">Calendar</button>
     </nav>
   </header>
 
   <main id="main">
-    <section class="panel setup-panel" id="setup-panel" hidden>
-      <p class="setup-progress" id="setup-progress" aria-live="polite">
-        Step <span id="setup-step-num">1</span> of <span id="setup-step-total">2</span>
-      </p>
-
-      <div class="setup-step" id="setup-step-choose">
-        <h1>Where are you with alcohol right now?</h1>
-        <p class="lede">Step 1 helps us set up your tracker the way that fits you. Nothing leaves this device.</p>
-        <div class="choice-grid" role="group" aria-label="How to set up your tracker">
-          <button type="button" class="choice-card" data-setup-path="last-drink">
-            <span class="choice-title">I know the date of my last drink</span>
-            <span class="choice-desc">We’ll start your alcohol-free clock from that moment.</span>
-          </button>
-          <button type="button" class="choice-card" data-setup-path="days-since">
-            <span class="choice-title">I know how many days it’s been</span>
-            <span class="choice-desc">Tell us roughly how long you’ve been alcohol-free.</span>
-          </button>
-          <button type="button" class="choice-card" data-setup-path="not-yet">
-            <span class="choice-title">I haven’t quit yet, but I want to</span>
-            <span class="choice-desc">No timer yet — we’ll focus on motivation until you’re ready.</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="setup-step" id="setup-step-last-drink" hidden>
-        <div class="setup-back-row">
-          <button type="button" class="btn btn-ghost setup-back" id="setup-back-last-drink" aria-label="Back to previous step">← Back</button>
-        </div>
-        <h1>When was your last drink?</h1>
-        <p class="lede">Use the date and time you finished your last drink — that’s when your alcohol-free streak begins.</p>
-        <form id="setup-form-last-drink" class="stack">
-          <label class="field">
-            <span class="field-label">Date</span>
-            <input type="date" id="start-date" required />
-          </label>
-          <label class="field">
-            <span class="field-label">Time (optional)</span>
-            <input type="time" id="start-time" />
-          </label>
-          <button type="submit" class="btn btn-primary">Continue</button>
-        </form>
-      </div>
-
-      <div class="setup-step" id="setup-step-days-since" hidden>
-        <div class="setup-back-row">
-          <button type="button" class="btn btn-ghost setup-back" id="setup-back-days-since" aria-label="Back to previous step">← Back</button>
-        </div>
-        <h1>How long has it been?</h1>
-        <p class="lede">Enter the number of full days since your last drink. If you’re starting fresh today, use 0.</p>
-        <form id="setup-form-days-since" class="stack">
-          <label class="field">
-            <span class="field-label">Days since last drink</span>
-            <input type="number" id="days-since-input" min="0" max="20000" step="1" value="0" required />
-          </label>
-          <button type="submit" class="btn btn-primary">Continue</button>
-        </form>
-      </div>
-
-      <div class="setup-step" id="setup-step-not-yet" hidden>
-        <div class="setup-back-row">
-          <button type="button" class="btn btn-ghost setup-back" id="setup-back-not-yet" aria-label="Back to previous step">← Back</button>
-        </div>
-        <h1>Glad you’re here</h1>
-        <p class="lede">Wanting to change is a real step. When you’re ready, you can start a clock from your last drink or from this moment — no pressure on the timeline.</p>
-        <button type="button" class="btn btn-primary" id="setup-finish-not-yet">Continue to the app</button>
-      </div>
-    </section>
-
-    <section class="panel dashboard app-view" id="dashboard" data-app-view="home" hidden>
-      <div class="card streak-carousel-card" id="streak-carousel-wrap">
-        <div
-          class="streak-carousel"
-          id="streak-carousel"
-          aria-roledescription="carousel"
-          aria-label="Alcohol-free streak, two views"
-        >
-          <div class="streak-carousel-viewport">
-            <div class="streak-carousel-track" id="streak-carousel-track">
-              <div
-                class="streak-slide"
-                id="streak-slide-0"
-                role="group"
-                aria-roledescription="slide"
-                aria-label="Days and time of day"
-              >
-                <div class="streak-hero">
-                  <p class="eyebrow">Alcohol-free for</p>
-                  <div class="streak-numbers" aria-live="polite">
-                    <span class="streak-unit">
-                      <span class="streak-value" id="days">0</span>
-                      <span class="streak-label">days</span>
-                    </span>
-                    <span class="streak-sep" aria-hidden="true">·</span>
-                    <span class="streak-unit streak-sub">
-                      <span class="streak-value-sm" id="hours-mins">0h 0m</span>
-                    </span>
-                  </div>
-                  <p class="since-line">Since <strong id="since-display">—</strong></p>
-                </div>
-              </div>
-              <div
-                class="streak-slide streak-slide--alt"
-                id="streak-slide-1"
-                role="group"
-                aria-roledescription="slide"
-                aria-label="Total hours and week-style dots"
-                aria-hidden="true"
-              >
-                <div class="streak-alt-inner">
-                  <p class="eyebrow streak-alt-eyebrow">⏱ Total time</p>
-                  <p class="streak-alt-hours" id="streak-alt-hours">0</p>
-                  <p class="streak-alt-hours-label">hours alcohol-free</p>
-                  <p class="streak-alt-breakdown" id="streak-alt-breakdown">—</p>
-                  <div class="streak-day-dots" id="streak-day-dots" aria-hidden="true"></div>
-                  <p class="streak-dots-caption">Each dot is a day you’ve stacked (up to ten shown).</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="streak-carousel-nav" aria-label="Switch streak view">
-            <button type="button" class="streak-carousel-arrow" id="streak-carousel-prev" aria-label="Previous view">
-              ←
-            </button>
-            <div class="streak-carousel-tabs" role="tablist">
-              <button
-                type="button"
-                class="streak-carousel-tab is-active"
-                role="tab"
-                id="streak-tab-0"
-                aria-selected="true"
-                aria-controls="streak-slide-0"
-                data-streak-slide="0"
-              >
-                📅 Days
-              </button>
-              <button
-                type="button"
-                class="streak-carousel-tab"
-                role="tab"
-                id="streak-tab-1"
-                aria-selected="false"
-                aria-controls="streak-slide-1"
-                data-streak-slide="1"
-              >
-                ⏱ Hours
-              </button>
-            </div>
-            <button type="button" class="streak-carousel-arrow" id="streak-carousel-next" aria-label="Next view">
-              →
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="intent-hero" id="dash-intent-block" hidden>
-        <p class="eyebrow">Getting ready</p>
-        <p class="intent-headline">You haven’t started a sober clock yet — and that’s okay.</p>
-        <p class="intent-copy">Use the check-in below to reflect. When you want a day counter, start the clock or tell us when your last drink was.</p>
-        <div class="intent-actions">
-          <button type="button" class="btn btn-primary" id="btn-start-clock-now">Start my alcohol-free clock now</button>
-          <button type="button" class="btn btn-secondary" id="btn-change-setup">Change my setup answers</button>
-        </div>
-      </div>
-
-      <div class="card quote-card">
-        <p class="quote" id="quote">—</p>
-        <p class="quote-attribution" id="quote-by"></p>
-      </div>
-
-      <div class="card milestone-card" id="dash-milestone-card">
-        <div class="milestone-header">
-          <span class="milestone-icon" aria-hidden="true">🎯</span>
-          <div class="milestone-header-copy">
-            <h2 class="card-title milestone-card-title">Next milestone</h2>
-            <p class="milestone-target-chip">
-              <span class="milestone-target-num" id="milestone-target-num">—</span>
-              <span class="milestone-target-suffix">day goal</span>
-            </p>
-          </div>
-        </div>
-        <p class="milestone-text" id="milestone-text">—</p>
-        <div class="milestone-progress-block">
-          <div
-            class="progress-wrap milestone-progress-wrap"
-            role="progressbar"
-            aria-valuemin="0"
-            aria-valuemax="100"
-            aria-valuenow="0"
-            id="milestone-bar-wrap"
-            aria-label="Progress to next milestone"
-          >
-            <div class="progress-bar milestone-progress-bar" id="milestone-bar"></div>
-          </div>
-          <p class="milestone-pct-note" id="milestone-pct-note" aria-live="polite">—</p>
-        </div>
-      </div>
-
-      <div class="card checkin-card" id="dash-checkin-card">
-        <h2 class="card-title">Daily check-in</h2>
-        <p class="card-sub">Log mood, energy, and feelings. Recent check-ins live on the Journal page.</p>
-        <form id="checkin-form" class="stack tight checkin-form">
-          <fieldset class="scale-fieldset">
-            <legend class="field-label">Mood right now</legend>
-            <div class="scale-row" role="radiogroup" aria-label="Mood">
-              <label class="scale-pill scale-pill--emoji" aria-label="Very low mood">
-                <input type="radio" name="checkin-mood" value="1" />
-                <span class="scale-pill-emoji" aria-hidden="true">😢</span>
-              </label>
-              <label class="scale-pill scale-pill--emoji" aria-label="Low mood">
-                <input type="radio" name="checkin-mood" value="2" />
-                <span class="scale-pill-emoji" aria-hidden="true">🙁</span>
-              </label>
-              <label class="scale-pill scale-pill--emoji" aria-label="Neutral mood">
-                <input type="radio" name="checkin-mood" value="3" checked />
-                <span class="scale-pill-emoji" aria-hidden="true">😐</span>
-              </label>
-              <label class="scale-pill scale-pill--emoji" aria-label="Good mood">
-                <input type="radio" name="checkin-mood" value="4" />
-                <span class="scale-pill-emoji" aria-hidden="true">🙂</span>
-              </label>
-              <label class="scale-pill scale-pill--emoji" aria-label="Great mood">
-                <input type="radio" name="checkin-mood" value="5" />
-                <span class="scale-pill-emoji" aria-hidden="true">😄</span>
-              </label>
-            </div>
-            <p class="scale-caption" id="mood-caption">Okay — neutral</p>
-          </fieldset>
-          <fieldset class="scale-fieldset">
-            <legend class="field-label">Energy level</legend>
-            <div class="scale-row" role="radiogroup" aria-label="Energy">
-              <label class="scale-pill scale-pill--battery" aria-label="Drained — almost empty battery">
-                <input type="radio" name="checkin-energy" value="1" />
-                <span class="scale-pill-battery-wrap" aria-hidden="true">
-                  <svg class="battery-icon" viewBox="0 0 36 18" width="36" height="18" focusable="false">
-                    <rect x="1.5" y="3.5" width="28" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.5" />
-                    <path d="M31.5 6.5h3.5a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-3.5" fill="currentColor" opacity="0.35" />
-                    <rect x="4.5" y="6" width="3" height="6" rx="1" fill="currentColor" />
-                  </svg>
-                </span>
-              </label>
-              <label class="scale-pill scale-pill--battery" aria-label="Low energy">
-                <input type="radio" name="checkin-energy" value="2" />
-                <span class="scale-pill-battery-wrap" aria-hidden="true">
-                  <svg class="battery-icon" viewBox="0 0 36 18" width="36" height="18" focusable="false">
-                    <rect x="1.5" y="3.5" width="28" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.5" />
-                    <path d="M31.5 6.5h3.5a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-3.5" fill="currentColor" opacity="0.35" />
-                    <rect x="4.5" y="6" width="9" height="6" rx="1" fill="currentColor" />
-                  </svg>
-                </span>
-              </label>
-              <label class="scale-pill scale-pill--battery" aria-label="Moderate energy">
-                <input type="radio" name="checkin-energy" value="3" checked />
-                <span class="scale-pill-battery-wrap" aria-hidden="true">
-                  <svg class="battery-icon" viewBox="0 0 36 18" width="36" height="18" focusable="false">
-                    <rect x="1.5" y="3.5" width="28" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.5" />
-                    <path d="M31.5 6.5h3.5a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-3.5" fill="currentColor" opacity="0.35" />
-                    <rect x="4.5" y="6" width="15" height="6" rx="1" fill="currentColor" />
-                  </svg>
-                </span>
-              </label>
-              <label class="scale-pill scale-pill--battery" aria-label="High energy">
-                <input type="radio" name="checkin-energy" value="4" />
-                <span class="scale-pill-battery-wrap" aria-hidden="true">
-                  <svg class="battery-icon" viewBox="0 0 36 18" width="36" height="18" focusable="false">
-                    <rect x="1.5" y="3.5" width="28" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.5" />
-                    <path d="M31.5 6.5h3.5a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-3.5" fill="currentColor" opacity="0.35" />
-                    <rect x="4.5" y="6" width="21" height="6" rx="1" fill="currentColor" />
-                  </svg>
-                </span>
-              </label>
-              <label class="scale-pill scale-pill--battery" aria-label="Full energy">
-                <input type="radio" name="checkin-energy" value="5" />
-                <span class="scale-pill-battery-wrap" aria-hidden="true">
-                  <svg class="battery-icon" viewBox="0 0 36 18" width="36" height="18" focusable="false">
-                    <rect x="1.5" y="3.5" width="28" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.5" />
-                    <path d="M31.5 6.5h3.5a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-3.5" fill="currentColor" opacity="0.35" />
-                    <rect x="4.5" y="6" width="22" height="6" rx="1" fill="currentColor" />
-                  </svg>
-                </span>
-              </label>
-            </div>
-            <p class="scale-caption" id="energy-caption">Steady — moderate</p>
-          </fieldset>
-          <fieldset class="emotion-fieldset">
-            <legend class="field-label">What are you feeling? <span class="optional">(pick any)</span></legend>
-            <div class="chip-grid" id="emotion-chips"></div>
-          </fieldset>
-          <label class="field">
-            <span class="field-label">Anything else on your mind? <span class="optional">(optional)</span></span>
-            <textarea id="checkin-note" rows="2" placeholder="A win, a craving, something you’re proud of…"></textarea>
-          </label>
-          <button type="submit" class="btn btn-secondary">Save check-in</button>
-        </form>
-      </div>
-
-      <div class="toolbar">
-        <button type="button" class="btn btn-ghost" id="btn-settings">Settings</button>
-        <button type="button" class="btn btn-text" id="btn-slip">I had a drink — reset kindly</button>
-      </div>
-    </section>
-
-    <section class="panel habits-panel app-view" id="view-habits" data-app-view="habits" hidden>
-      <h1 class="journal-page-title">Habits</h1>
-      <p class="card-sub habits-page-lede">
-        Build your habit list below, then log by day — each saved entry updates the Journal titled “Habits” for that date.
-      </p>
-      <div class="card habits-log-card">
-        <h2 class="card-title"><span class="habits-log-card-icon" aria-hidden="true">📋</span> Log by day</h2>
-        <p class="card-sub habits-log-card-sub">
-          Pick the date, tap <strong>＋ Add</strong> on a habit, then <strong>Save entry</strong>. Lines shrink to a short summary; use the trash control to remove one.
-        </p>
-        <div class="habits-log-date-toolbar">
-          <div class="habits-log-date-row">
-            <button type="button" class="btn btn-ghost habits-log-nav-btn" id="habits-log-prev-day" aria-label="Previous day">
-              ←
-            </button>
-            <label class="field habits-log-date-field">
-              <span class="field-label">Date</span>
-              <input type="date" id="habits-log-date" required />
-            </label>
-            <button type="button" class="btn btn-ghost habits-log-nav-btn" id="habits-log-next-day" aria-label="Next day">
-              →
-            </button>
-          </div>
-          <button type="button" class="btn btn-secondary habits-log-today-btn" id="habits-log-today">Today</button>
-        </div>
-        <fieldset class="habit-log-fieldset" id="habit-log-fieldset" hidden>
-          <legend class="field-label">Your habits</legend>
-          <p class="habit-log-hint">Fields stay hidden until you add an entry. <strong>Save entry</strong> stores it and updates your journal.</p>
-          <div id="habit-log-rows" class="habit-log-rows"></div>
-        </fieldset>
-      </div>
-      <div class="card habits-card">
-        <div class="habits-explore-head">
-          <h2 class="card-title">Habits to explore</h2>
-          <p class="habits-explore-teaser">Try suggested ideas or add your own — expand to see the full list.</p>
-          <button
-            type="button"
-            class="btn btn-ghost habits-explore-toggle"
-            id="habits-explore-toggle"
-            aria-expanded="false"
-            aria-controls="habits-explore-expanded"
-          >
-            Show suggestions
-          </button>
-        </div>
-        <div class="habits-explore-expanded" id="habits-explore-expanded" hidden>
-          <p class="card-sub habits-explore-sub">Small steady steps add up.</p>
-          <ul class="habits-suggested" id="habits-suggested-list" aria-label="Suggested habits"></ul>
-          <div class="habits-custom-block">
+    <section class="view view-log is-visible" id="view-log" aria-labelledby="log-heading">
+      <div class="panel panel-log">
+        <h2 id="log-heading" class="panel-title">
+          <span class="panel-title-icon" aria-hidden="true">📝</span>
+          Drop a log <span class="subtle">(the other kind)</span>
+        </h2>
+        <form id="form-log" class="log-form" novalidate>
+          <div class="field-row">
             <label class="field">
-              <span class="field-label">Your own habit</span>
-              <div class="habits-custom-row">
-                <input type="text" id="habit-custom-input" maxlength="120" placeholder="e.g. Call a friend on hard days" autocomplete="off" />
-                <button type="button" class="btn btn-primary habits-add-btn" id="habit-custom-add">Add</button>
-              </div>
+              <span class="field-label">Date</span>
+              <input type="date" name="date" id="field-date" required />
             </label>
-            <ul class="habits-custom-list" id="habits-custom-list" aria-label="Your habits"></ul>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="panel journal-panel app-view" id="view-journal" data-app-view="journal" hidden>
-      <div class="journal-screen" id="journal-screen-list">
-        <h1 class="journal-page-title">Journal</h1>
-        <p class="card-sub page-lede">
-          Your writing, mood check-ins from Home, and habit logs synced from the Habits page — each in its own section below. Jump with the links or scroll.
-        </p>
-        <div class="split-page-layout">
-          <nav class="journal-subnav" id="journal-subnav" aria-label="Journal sections">
-            <a class="journal-subnav-link" href="#/journal/writing">Your writing</a>
-            <a class="journal-subnav-link" href="#/journal/mood">Mood check-ins</a>
-            <a class="journal-subnav-link" href="#/journal/habits">Habit logs</a>
-          </nav>
-          <div class="split-page-main">
-        <section
-          id="journal-section-writing"
-          class="card journal-section-card journal-section-writing"
-          tabindex="-1"
-          aria-labelledby="journal-writing-heading"
-        >
-          <h2 class="card-title" id="journal-writing-heading">Your writing</h2>
-          <p class="card-sub journal-section-lede">
-            Longer reflections. Link a check-in when you save an entry to see mood, energy, and feelings alongside your text.
-          </p>
-          <div class="journal-toolbar journal-toolbar--section">
-            <a href="#/journal/new" class="btn btn-primary">New entry</a>
-          </div>
-          <ul class="journal-list" id="journal-entries-list" aria-label="Your journal entries"></ul>
-          <p class="journal-empty" id="journal-empty-hint" hidden>
-            No entries yet. When you’re ready, add one — it stays on this device.
-          </p>
-        </section>
-
-        <section
-          id="journal-section-mood"
-          class="card journal-section-card journal-section-mood"
-          tabindex="-1"
-          aria-labelledby="journal-mood-heading"
-        >
-          <h2 class="card-title" id="journal-mood-heading">Mood check-ins</h2>
-          <p class="card-sub journal-section-lede">Saved from Home — mood, energy, feelings, and optional note.</p>
-          <ul class="checkin-list" id="journal-checkins-list" aria-label="Recent check-ins"></ul>
-        </section>
-
-        <section
-          id="journal-section-habits"
-          class="card journal-section-card journal-section-habits"
-          tabindex="-1"
-          aria-labelledby="journal-habits-heading"
-        >
-          <h2 class="card-title" id="journal-habits-heading">Habit logs</h2>
-          <p class="card-sub journal-section-lede">
-            Auto-saved journal rows from the Habits page (one per day you log). Open one to read the full list for that day.
-          </p>
-          <ul class="journal-list journal-list--habit-logs" id="journal-habits-entries-list" aria-label="Habit log entries"></ul>
-          <p class="journal-empty journal-empty--inline" id="journal-habits-empty-hint" hidden>
-            No habit logs yet — save entries from <a href="#/habits">Habits</a> and they’ll show up here.
-          </p>
-        </section>
-          </div>
-        </div>
-      </div>
-
-      <div class="journal-screen" id="journal-screen-compose" hidden>
-        <div class="journal-screen-head">
-          <button type="button" class="btn btn-ghost journal-back" id="journal-back-compose">← Back to journal</button>
-        </div>
-        <h1 class="journal-page-title">New entry</h1>
-        <form id="journal-form" class="stack tight">
-          <label class="field">
-            <span class="field-label">Title <span class="optional">(optional)</span></span>
-            <input type="text" id="journal-title" maxlength="120" placeholder="A few words to find this later" autocomplete="off" />
-          </label>
-          <label class="field">
-            <span class="field-label">Entry</span>
-            <textarea id="journal-body" rows="10" required placeholder="Write freely — what happened today, what you’re sitting with, what you hope for…"></textarea>
-          </label>
-          <fieldset class="journal-link-fieldset">
-            <legend class="field-label">Check-in snapshot</legend>
-            <label class="journal-check-label">
-              <input type="checkbox" id="journal-link-checkin" />
-              <span>Attach a check-in to this entry</span>
+            <label class="field">
+              <span class="field-label">Time</span>
+              <input type="time" name="time" id="field-time" required />
             </label>
-            <label class="field journal-select-wrap" id="journal-checkin-field">
-              <span class="field-label">Which check-in?</span>
-              <select id="journal-checkin-select" aria-label="Check-in to attach"></select>
-            </label>
-            <p class="journal-link-hint" id="journal-no-checkins-hint" hidden>You don’t have any check-ins saved yet. You can add one from Home first, or save this entry without a link.</p>
+          </div>
+
+          <fieldset class="field-set">
+            <legend class="field-set-legend">Size <span class="hint">— how majestic was it?</span></legend>
+            <div class="chip-grid" id="size-options" role="radiogroup" aria-label="Size"></div>
           </fieldset>
-          <button type="submit" class="btn btn-primary">Save entry</button>
+
+          <fieldset class="field-set">
+            <legend class="field-set-legend">Consistency <span class="hint">— science, but make it silly</span></legend>
+            <div class="chip-grid" id="consistency-options" role="radiogroup" aria-label="Consistency"></div>
+          </fieldset>
+
+          <label class="field">
+            <span class="field-label">Extra intel <span class="hint">(optional)</span></span>
+            <textarea name="notes" id="field-notes" rows="3" maxlength="500" placeholder="e.g. Had coffee first. Regret nothing."></textarea>
+          </label>
+
+          <div class="photo-zone">
+            <button type="button" class="btn btn-photo-fake" id="btn-fake-photo" aria-describedby="photo-fake-hint">
+              <span class="btn-photo-icon" aria-hidden="true">📷</span>
+              <span class="btn-photo-text">Attach glamour shot</span>
+            </button>
+            <p id="photo-fake-hint" class="photo-hint">Totally optional. Probably.</p>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+              <span aria-hidden="true">✨</span> Log it
+            </button>
+          </div>
         </form>
       </div>
-
-      <div class="journal-screen" id="journal-screen-read" hidden>
-        <div class="journal-screen-head">
-          <button type="button" class="btn btn-ghost journal-back" id="journal-back-read">← Back to journal</button>
-        </div>
-        <article class="journal-read-article" id="journal-read-root"></article>
-      </div>
     </section>
 
-    <section class="panel insights-panel app-view" id="view-insights" data-app-view="insights" hidden>
-      <h1 class="journal-page-title">Your Insights</h1>
-      <p class="card-sub insights-page-lede">
-        A gentle read on what you’ve saved in Steady — your streak, moods, habits, and writing. It’s meant as encouragement from your own notes, not medical advice or a diagnosis.
-      </p>
-      <div class="card insights-copy-card">
-        <div
-          class="smart-insights-frame"
-          id="smart-insights-body"
-          role="region"
-          aria-live="polite"
-          aria-label="Your insights"
-        ></div>
-      </div>
-    </section>
-
-    <section class="panel resources-panel app-view" id="view-resources" data-app-view="resources" hidden>
-      <h1 class="journal-page-title">Resources</h1>
-      <p class="card-sub page-lede">
-        Browse ideas for books, podcasts, and meetings. Add your own to-dos, save favorites, and tune recommendations with thumbs up or down
-        — everything stays on this device.
-      </p>
-
-      <div class="split-page-layout">
-        <nav class="journal-subnav" id="resources-side-nav" aria-label="On this page">
-          <a class="journal-subnav-link" href="#/resources" data-resources-jump="resources-section-health">Health spotlight</a>
-          <a class="journal-subnav-link" href="#/resources" data-resources-jump="resources-section-recommendations">
-            Recommendations
-          </a>
-          <a class="journal-subnav-link" href="#/resources" data-resources-jump="resources-section-list">Your list</a>
-          <a class="journal-subnav-link" href="#/resources" data-resources-jump="resources-section-favorites">Favorites</a>
-        </nav>
-
-        <div class="split-page-main">
-          <div id="resources-section-health" class="resources-jump-section card health-card" tabindex="-1">
-            <h2 class="card-title">Health spotlight</h2>
-            <p class="card-sub health-card-sub">
-              Science-based reasons cutting back or quitting can support your body — everyone’s path and timeline differ.
-            </p>
-            <p class="health-teaser" id="health-teaser"></p>
-            <button
-              type="button"
-              class="btn btn-ghost health-learn-btn"
-              id="health-learn-more"
-              aria-expanded="false"
-              aria-controls="health-expanded"
-            >
-              Learn more
-            </button>
-            <div class="health-expanded" id="health-expanded" hidden>
-              <p class="health-detail" id="health-detail"></p>
-              <div class="health-sources">
-                <h3 class="health-sources-title">Sources</h3>
-                <ul class="health-sources-list" id="health-sources-list"></ul>
-              </div>
-            </div>
-          </div>
-
-          <div id="resources-section-recommendations" class="resources-jump-section" tabindex="-1">
-            <h2 class="sr-only">Recommendations</h2>
-            <div id="resources-carousels-root" class="resources-carousels-root"></div>
-            <p class="resources-reset-wrap">
-              <button type="button" class="btn btn-text resources-reset-hidden" id="resources-reset-dismissed">
-                Show hidden recommendations again
-              </button>
-            </p>
-          </div>
-
-          <div id="resources-section-list" class="resources-jump-section card resources-list-card" tabindex="-1">
-            <h2 class="card-title">Your list</h2>
-            <p class="card-sub">Track things you want to try — check them off when you’re done.</p>
-            <form id="resources-add-form" class="resources-add-row">
-              <label class="field resources-add-field">
-                <span class="field-label">Add a resource</span>
-                <input type="text" id="resources-add-title" maxlength="200" placeholder="e.g. SMART meeting Tuesday" autocomplete="off" />
-              </label>
-              <label class="field resources-add-field resources-add-url-field">
-                <span class="field-label">Link <span class="optional">(optional)</span></span>
-                <input type="text" id="resources-add-url" maxlength="500" placeholder="https://…" inputmode="url" autocomplete="off" />
-              </label>
-              <button type="submit" class="btn btn-primary resources-add-submit">Add</button>
-            </form>
-            <ul class="resources-my-list" id="resources-my-list" aria-label="Your resource list"></ul>
-            <p class="resources-empty-hint" id="resources-my-empty" hidden>Nothing here yet — add your own or use 👍 on a recommendation.</p>
-          </div>
-
-          <div id="resources-section-favorites" class="resources-jump-section card resources-favorites-card" tabindex="-1">
-            <h2 class="card-title">Favorites</h2>
-            <p class="card-sub">Quick access to picks you’ve starred from recommendations or your list.</p>
-            <ul class="resources-fav-list" id="resources-favorites-list" aria-label="Favorite resources"></ul>
-            <p class="resources-empty-hint" id="resources-fav-empty" hidden>No favorites yet — tap the star on a card or list item.</p>
-          </div>
+    <section class="view view-calendar" id="view-calendar" hidden aria-labelledby="cal-heading">
+      <div class="panel panel-cal">
+        <h2 id="cal-heading" class="panel-title">
+          <span class="panel-title-icon" aria-hidden="true">🗓️</span>
+          The poop calendar
+        </h2>
+        <p class="cal-lede">Days with activity get a little friend. Tap a day for the full saga.</p>
+        <div class="cal-toolbar">
+          <button type="button" class="btn btn-ghost cal-nav" id="cal-prev" aria-label="Previous month">◀</button>
+          <h3 class="cal-month-label" id="cal-month-label">Month Year</h3>
+          <button type="button" class="btn btn-ghost cal-nav" id="cal-next" aria-label="Next month">▶</button>
         </div>
+        <div class="calendar" id="calendar-root" role="grid" aria-label="Poop calendar by day"></div>
       </div>
     </section>
   </main>
 
-  <dialog class="modal" id="settings-modal" aria-labelledby="settings-title">
-    <div class="modal-inner">
-      <h2 id="settings-title">Settings</h2>
-
-      <div class="settings-section">
-        <h3 class="settings-subtitle">Appearance</h3>
-        <fieldset class="settings-fieldset-plain">
-          <legend class="field-label">Theme</legend>
-          <div class="theme-choice-row" role="radiogroup" aria-label="Color theme">
-            <label class="theme-choice">
-              <input type="radio" name="settings-theme" value="light" />
-              <span>Light</span>
-            </label>
-            <label class="theme-choice">
-              <input type="radio" name="settings-theme" value="dark" />
-              <span>Dark</span>
-            </label>
-          </div>
-        </fieldset>
-      </div>
-
-      <div class="settings-section">
-        <h3 class="settings-subtitle">Sober clock</h3>
-        <form id="settings-form" class="stack tight">
-          <label class="field">
-            <span class="field-label">Streak start (date)</span>
-            <input type="date" id="settings-date" required />
-          </label>
-          <label class="field">
-            <span class="field-label">Streak start (time)</span>
-            <input type="time" id="settings-time" />
-          </label>
-          <div class="modal-actions">
-            <button type="submit" class="btn btn-primary">Save streak</button>
-            <button type="button" class="btn btn-ghost" id="settings-cancel">Close</button>
-          </div>
-        </form>
-      </div>
-
-      <div class="settings-data-block">
-        <h3 class="settings-subtitle" id="settings-data-heading">Backup &amp; restore</h3>
-        <p class="settings-data-lede">
-          Data is saved in this browser (it survives closing the tab). To keep a copy elsewhere—iCloud, Google Drive, email, or another
-          computer—download a backup file. Restoring replaces all Steady data in this browser with the file’s contents.
-        </p>
-        <div class="settings-data-actions">
-          <button type="button" class="btn btn-secondary" id="btn-export-data">Download backup file</button>
-          <input type="file" id="import-file-input" accept="application/json,.json" hidden />
-          <button type="button" class="btn btn-ghost" id="btn-import-trigger">Restore from backup…</button>
-        </div>
-      </div>
-    </div>
-  </dialog>
-
-  <dialog class="modal modal-slip" id="slip-modal" aria-labelledby="slip-title">
-    <div class="modal-inner">
-      <h2 id="slip-title">Starting fresh is still progress</h2>
-      <p class="modal-body">Relapse is common in recovery. What matters is what you do next. If you’d like, set a new start time — your check-ins, journal, and habits stay here unless you clear them in the browser.</p>
-      <form id="slip-form" class="stack">
-        <label class="field">
-          <span class="field-label">New start (date)</span>
-          <input type="date" id="slip-date" required />
-        </label>
-        <label class="field">
-          <span class="field-label">New start (time)</span>
-          <input type="time" id="slip-time" />
-        </label>
-        <div class="modal-actions">
-          <button type="submit" class="btn btn-primary">Set new streak</button>
-          <button type="button" class="btn btn-ghost" id="slip-cancel">Close</button>
-        </div>
-      </form>
-    </div>
-  </dialog>
-
   <footer class="site-footer">
-    <p>If you’re in crisis or need support, reach out to a trusted person or local helpline. This app is not medical advice.</p>
+    <div class="site-footer-inner">
+      <p class="footer-feedback-lede">Got feelings about the app?</p>
+      <button type="button" class="btn btn-feedback" id="btn-feedback">
+        <span aria-hidden="true">✉️</span> Share feedback
+      </button>
+      <p class="footer-feedback-hint">Opens your email app with a chaotic subject line. If nothing happens, try opening this page in Safari or Chrome — some in-app browsers block mail links.</p>
+    </div>
   </footer>
+
+  <dialog class="modal" id="dialog-settings" aria-labelledby="settings-title">
+    <div class="modal-inner">
+      <button type="button" class="modal-close" data-close-dialog="dialog-settings" aria-label="Close settings">×</button>
+      <h2 id="settings-title" class="modal-title">Settings</h2>
+      <p class="modal-lede">Tweak the vibe. Still zero servers involved.</p>
+
+      <p class="settings-section-label">Appearance</p>
+      <label class="toggle-row">
+        <input type="checkbox" id="toggle-dark" />
+        <span class="toggle-ui" aria-hidden="true"></span>
+        <span class="toggle-label">Dark mode <span class="hint">(for 3 a.m. bathroom missions)</span></span>
+      </label>
+    </div>
+  </dialog>
+
+  <dialog class="modal" id="dialog-day" aria-labelledby="day-dialog-title">
+    <div class="modal-inner">
+      <button type="button" class="modal-close" data-close-dialog="dialog-day" aria-label="Close">×</button>
+      <h2 id="day-dialog-title" class="modal-title">That day</h2>
+      <div id="day-dialog-body" class="day-detail-body"></div>
+    </div>
+  </dialog>
+
+  <dialog class="modal modal-sicko" id="dialog-sicko" aria-labelledby="sicko-title">
+    <div class="modal-inner">
+      <button type="button" class="modal-close" data-close-dialog="dialog-sicko" aria-label="Close">×</button>
+      <div class="sicko-art" aria-hidden="true">🤢📵</div>
+      <h2 id="sicko-title" class="modal-title">Absolutely not</h2>
+      <p class="sicko-text" id="sicko-message"></p>
+      <button type="button" class="btn btn-primary" data-close-dialog="dialog-sicko">Fine, I’ll behave</button>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
   <script src="app.js" defer></script>
 </body>
